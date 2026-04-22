@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= pageTitle %></title>
+  <meta name="description" content="Convert shipping labels to 4x6 thermal format. Upload a PDF, JPG, or PNG and download a thermal-printer-ready file in seconds." />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <header class="site-header wrapper">
+    <a class="logo" href="/">PDF to Thermal</a>
+    <nav>
+      <a href="/faq">FAQ</a>
+      <a href="/privacy">Privacy</a>
+      <a href="/terms">Terms</a>
+      <a href="/contact">Contact</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero wrapper">
+      <div class="hero-copy">
+        <p class="eyebrow">4x6 thermal label converter</p>
+        <h1>Convert Shipping Labels to 4x6 Thermal Format</h1>
+        <p class="lead">Upload a PDF, JPG, or PNG label and turn it into a clean thermal-printer-ready PDF in seconds.</p>
+        <p class="support-line">Works with USPS, UPS, FedEx, Amazon returns, eBay, Etsy, and more.</p>
+      </div>
+
+      <div class="card upload-card">
+        <h2>Upload your label</h2>
+        <p>Supported file types: PDF, JPG, PNG</p>
+
+        <% if (error) { %>
+          <div class="alert"><%= error %></div>
+        <% } %>
+
+        <form action="/convert" method="POST" enctype="multipart/form-data">
+          <label class="file-input">
+            <span>Choose file</span>
+            <input type="file" name="labelFile" accept=".pdf,.jpg,.jpeg,.png" required />
+          </label>
+          <button type="submit" class="btn">Convert Label</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="wrapper section">
+      <h2>How it works</h2>
+      <div class="steps">
+        <div class="card">
+          <h3>1. Upload</h3>
+          <p>Add a shipping label in PDF, JPG, or PNG format.</p>
+        </div>
+        <div class="card">
+          <h3>2. Convert</h3>
+          <p>The file is placed on a 4x6 thermal label layout.</p>
+        </div>
+        <div class="card">
+          <h3>3. Download</h3>
+          <p>Download the finished file and print it on your thermal printer.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrapper section section-muted">
+      <h2>Why people use PDF to Thermal</h2>
+      <p>Shipping labels often arrive in formats that do not print well on thermal printers. PDF to Thermal gives you a faster way to make them printable on 4x6 paper without wrestling with print settings.</p>
+      <ul class="feature-list">
+        <li>Converts labels to 4x6 format</li>
+        <li>Simple browser-based workflow</li>
+        <li>Fast for repeat shipping tasks</li>
+        <li>Made for sellers and shippers</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="site-footer wrapper">
+    <p>© <%= new Date().getFullYear() %> PDF to Thermal</p>
+  </footer>
+</body>
+</html>
