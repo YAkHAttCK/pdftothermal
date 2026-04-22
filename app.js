@@ -300,5 +300,5 @@ app.post('/convert', upload.single('labelFile'), async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(\`PDF to Thermal running on port \${PORT}\`);
+  console.log(`PDF to Thermal running on port ${PORT}`);
 });
