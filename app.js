@@ -27,7 +27,8 @@ const downloadsDir = path.join(__dirname, 'downloads');
 // Routes
 app.get('/', (req, res) => {
   res.render('index', { 
-    pageTitle: 'PDF to Thermal | Convert Shipping Labels to 4x6' 
+    pageTitle: 'PDF to Thermal | Convert Shipping Labels to 4x6',
+    error: null // This line fixes the "error is not defined" crash
   });
 });
 
