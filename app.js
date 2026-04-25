@@ -44,6 +44,7 @@ app.use('/downloads', express.static(downloadsDir));
 
 // Master Page Template
 function pageTemplate({ title = 'PDF to Thermal', content = '', canonicalPath = '/' }) {
+  const canonicalUrl = `${SITE_URL}${canonicalPath === '/' ? '' : canonicalPath}`;
   return `
   <!DOCTYPE html>
   <html lang="en">
@@ -51,27 +52,35 @@ function pageTemplate({ title = 'PDF to Thermal', content = '', canonicalPath = 
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${title}</title>
-    <link rel="canonical" href="${SITE_URL}${canonicalPath}" />
+    <link rel="canonical" href="${canonicalUrl}" />
     <style>
-      :root { --primary: #2563eb; --dark: #0f172a; --light: #f8fafc; --border: #e2e8f0; --accent: #eff6ff; }
+      :root { --primary: #2563eb; --dark: #0f172a; --light: #f8fafc; --border: #e2e8f0; --accent: #eff6ff; --social: #1877f2; }
       body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--light); color: var(--dark); line-height: 1.6; }
       .container { max-width: 900px; margin: 0 auto; padding: 0 20px; }
       header { padding: 20px 0; border-bottom: 1px solid var(--border); background: white; display: flex; justify-content: space-between; align-items: center; }
       .logo { font-size: 22px; font-weight: 800; color: var(--primary); text-decoration: none; }
       nav a { margin-left: 15px; text-decoration: none; color: #64748b; font-weight: 600; font-size: 14px; }
       .card { background: white; padding: 32px; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid var(--border); margin-top: 30px; }
-      .btn { background: var(--primary); color: white; padding: 12px 24px; border-radius: 10px; text-decoration: none; display: inline-block; font-weight: 700; border: none; cursor: pointer; transition: 0.2s; }
+      .btn { background: var(--primary); color: white; padding: 12px 24px; border-radius: 10px; text-decoration: none; display: inline-flex; align-items:center; gap:8px; font-weight: 700; border: none; cursor: pointer; transition: 0.2s; }
       .btn:hover { background: #1d4ed8; transform: translateY(-1px); }
       .btn.secondary { background: var(--accent); color: var(--primary); }
+      .btn.social { background: var(--social); font-size: 13px; padding: 8px 16px; }
       .preview-frame { width: 100%; height: 550px; border: 1px solid var(--border); border-radius: 12px; margin: 20px 0; background: #eee; }
       .money-box { background: #fff7ed; border: 1px solid #ffedd5; padding: 20px; border-radius: 14px; margin-top: 25px; }
+      .supply-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
+      .supply-item { border: 1px solid var(--border); padding: 20px; border-radius: 12px; background: #fff; }
       footer { background: var(--dark); color: white; padding: 40px 0; text-align: center; margin-top: 60px; font-size: 14px; }
-      h1 { font-size: 28px; margin-bottom: 10px; }
       .seo-links { margin-top: 40px; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; font-size: 13px; }
       .seo-links a { color: var(--primary); text-decoration: none; background: white; padding: 8px; border-radius: 6px; border: 1px solid var(--border); text-align: center; }
     </style>
     <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_ID}"></script>
-    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());gtag('config','${GA_ID}');</script>
+    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_ID}');</script>
+    <script>
+      function copyToClipboard() {
+        navigator.clipboard.writeText('${SITE_URL}');
+        alert('Link copied! Share it with other sellers.');
+      }
+    </script>
   </head>
   <body>
     <header><div class="container" style="display:flex; justify-content:space-between; align-items:center; width:100%;"><a href="/" class="logo">PDF to Thermal</a><nav><a href="/best-thermal-printers">Best Printers</a><a href="/faq">FAQ</a></nav></div></header>
@@ -93,7 +102,7 @@ function renderSEOPage(req, res, h1, text, pathName) {
     }));
 }
 
-// Logic Functions
+// Logic Functions (Multi-page PDF and Sharp Image Processing)
 async function imageToPdf(inputPath, outputPath, mode) {
   const metadata = await sharp(inputPath).metadata();
   const pipeline = mode === 'autorotate' && metadata.width > metadata.height ? sharp(inputPath).rotate(90) : sharp(inputPath);
@@ -103,6 +112,7 @@ async function imageToPdf(inputPath, outputPath, mode) {
   const embedded = await pdfDoc.embedPng(imageBuffer);
   page.drawImage(embedded, { x: 0, y: 0, width: 288, height: 432 });
   fs.writeFileSync(outputPath, await pdfDoc.save());
+  return { pageCount: 1 };
 }
 
 async function pdfTo4x6(inputPath, outputPath, mode) {
@@ -123,6 +133,7 @@ async function pdfTo4x6(inputPath, outputPath, mode) {
     });
   }
   fs.writeFileSync(outputPath, await newPdf.save());
+  return { pageCount: pages.length };
 }
 
 // ROUTES
@@ -170,24 +181,15 @@ app.get('/', (req, res) => {
   }));
 });
 
-// Expanded SEO Batch
-app.get('/amazon-seller-label-to-4x6', (req, res) => renderSEOPage(req, res, 'Amazon Seller Label to 4x6 Converter', 'Fix Amazon Seller Central shipping and FNSKU labels that are too large for your thermal printer.', '/amazon-seller-label-to-4x6'));
-app.get('/tiktok-shop-label-fix', (req, res) => renderSEOPage(req, res, 'TikTok Shop Shipping Label 4x6 Fix', 'Instantly resize TikTok Shop labels to the correct 4x6 format for easy thermal printing.', '/tiktok-shop-label-fix'));
-app.get('/walmart-marketplace-label-resizer', (req, res) => renderSEOPage(req, res, 'Walmart Seller Label to 4x6 Resizer', 'Professional resizing for Walmart Marketplace and DSV labels into thermal-ready 4x6 PDFs.', '/walmart-marketplace-label-resizer'));
-app.get('/whatnot-label-to-4x6', (req, res) => renderSEOPage(req, res, 'Whatnot Shipping Label to 4x6 Converter', 'Convert Whatnot live-sale labels into a clean 4x6 format for bulk thermal printing.', '/whatnot-label-to-4x6'));
-app.get('/ebay-8-5x11-to-4x6', (req, res) => renderSEOPage(req, res, 'eBay 8.5x11 to 4x6 Converter', 'Quickly crop and resize eBay PDF labels for your thermal printer.', '/ebay-8-5x11-to-4x6'));
-app.get('/etsy-label-printing-too-small', (req, res) => renderSEOPage(req, res, 'Fix Etsy Label Printing Too Small', 'Force your Etsy labels to fill the 4x6 area. No more tiny barcodes.', '/etsy-label-printing-too-small'));
-app.get('/poshmark-label-to-4x6', (req, res) => renderSEOPage(req, res, 'Poshmark 4x6 Label Converter', 'Convert Poshmark labels to print-ready thermal format.', '/poshmark-label-to-4x6'));
-app.get('/pirateship-label-to-4x6', (req, res) => renderSEOPage(req, res, 'Pirate Ship 4x6 Converter', 'Perfectly scale Pirate Ship labels for any 4x6 printer.', '/pirateship-label-to-4x6'));
-
+// SUPPLY STATION (REVENUE PAGE)
 app.get('/best-thermal-printers', (req, res) => {
   res.send(pageTemplate({
-    title: 'Best Thermal Shipping Label Printers of 2026',
+    title: 'Best Thermal Printers & Shipping Supplies 2026',
     canonicalPath: '/best-thermal-printers',
     content: `
       <div class="card">
         <h1>Top 4x6 Thermal Printers for 2026</h1>
-        <p>Stop buying ink. These are the top-rated printers for eBay, Etsy, and Amazon sellers.</p>
+        <p>Professional gear for serious sellers. Stop wasting time with ink and tape.</p>
         <div style="border-top:1px solid #eee; margin:20px 0; padding-top:20px;">
             <h3>1. Rollo Wireless (Top Choice)</h3>
             <p>The industry standard. Fast, reliable, and works via Wi-Fi from any device.</p>
@@ -198,10 +200,31 @@ app.get('/best-thermal-printers', (req, res) => {
             <p>Sleek design, easy setup, and legendary durability for home businesses.</p>
             <a href="https://www.amazon.com/dp/B08B8H57R6?tag=${AMZ_ID}" class="btn" target="_blank">Check Price on Amazon</a>
         </div>
+
+        <h2 style="margin-top:50px;">Must-Have Shipping Supplies</h2>
+        <p>Don't run out of the basics. Here is what we use in our own shipping station.</p>
+        <div class="supply-grid">
+            <div class="supply-item">
+                <h4>Premium 4x6 Labels</h4>
+                <p>High-quality fanfold labels that won't jam your printer.</p>
+                <a href="https://www.amazon.com/s?k=4x6+thermal+labels&tag=${AMZ_ID}" style="font-weight:700;">Shop Labels →</a>
+            </div>
+            <div class="supply-item">
+                <h4>Digital Shipping Scale</h4>
+                <p>Accurate up to 110lbs. Essential for precise postage.</p>
+                <a href="https://www.amazon.com/dp/B00350Z67G?tag=${AMZ_ID}" style="font-weight:700;">Shop Scales →</a>
+            </div>
+            <div class="supply-item">
+                <h4>Self-Seal Bubble Mailers</h4>
+                <p>The fastest way to pack and ship smaller items safely.</p>
+                <a href="https://www.amazon.com/s?k=bubble+mailers&tag=${AMZ_ID}" style="font-weight:700;">Shop Mailers →</a>
+            </div>
+        </div>
       </div>`
   }));
 });
 
+// Conversion Route with VIRAL SHARE
 app.post('/convert', upload.single('labelFile'), async (req, res) => {
   if (!req.file) return res.status(400).send('Upload a file.');
   cleanupOldFiles();
@@ -209,20 +232,32 @@ app.post('/convert', upload.single('labelFile'), async (req, res) => {
   const outputPath = path.join(downloadsDir, outputName);
   try {
     const ext = path.extname(req.file.originalname).toLowerCase();
-    (ext === '.pdf') ? await pdfTo4x6(req.file.path, outputPath, req.body.mode) : await imageToPdf(req.file.path, outputPath, req.body.mode);
+    const result = (ext === '.pdf') ? await pdfTo4x6(req.file.path, outputPath, req.body.mode) : await imageToPdf(req.file.path, outputPath, req.body.mode);
+    
     res.send(pageTemplate({
-      title: 'Success | Your Label is Ready',
+      title: 'Success | Preview Your 4x6 Label',
       content: `
         <div class="card">
           <h1>Conversion Ready!</h1>
           <iframe class="preview-frame" src="/downloads/${outputName}"></iframe>
-          <div style="display:flex; gap:10px;">
+          
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
             <a href="/downloads/${outputName}" class="btn" download>Download PDF</a>
             <a href="/" class="btn secondary">Convert Another</a>
           </div>
+
+          <div style="margin-top:30px; border-top:1px solid #eee; padding-top:20px;">
+            <p style="font-weight:700; margin-bottom:10px;">🙌 Helpful? Share with other sellers!</p>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <a href="https://www.facebook.com/sharer/sharer.php?u=${SITE_URL}" target="_blank" class="btn social">Share on Facebook</a>
+              <a href="https://twitter.com/intent/tweet?url=${SITE_URL}&text=Check out this free tool to resize shipping labels for 4x6 thermal printers!" target="_blank" class="btn social" style="background:#000;">Post on X</a>
+              <button onclick="copyToClipboard()" class="btn secondary" style="font-size:13px; padding:8px 16px;">Copy Link</button>
+            </div>
+          </div>
+
           <div class="money-box">
-            <h3>🖨️ Need a professional setup?</h3>
-            <p>Check out our <a href="/best-thermal-printers">2026 Thermal Printer Buyer's Guide</a> to see our top picks.</p>
+            <h3>🖨️ Still cutting and taping?</h3>
+            <p>Save hours every week with a real thermal setup. Check out our <a href="/best-thermal-printers">2026 Shipping Supply Guide</a>.</p>
           </div>
         </div>`
     }));
@@ -230,8 +265,16 @@ app.post('/convert', upload.single('labelFile'), async (req, res) => {
   finally { if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path); }
 });
 
-app.get('/faq', (req, res) => { res.send(pageTemplate({ title: 'FAQ', content: '<div class="card"><h1>FAQ</h1><p>We support all major marketplaces including Amazon, TikTok, eBay, and Etsy.</p></div>' })); });
-app.get('/privacy', (req, res) => { res.send(pageTemplate({ title: 'Privacy', content: '<div class="card"><h1>Privacy</h1><p>Files are deleted automatically after 1 hour.</p></div>' })); });
-app.get('/terms', (req, res) => { res.send(pageTemplate({ title: 'Terms', content: '<div class="card"><h1>Terms</h1><p>Use at your own risk. Always preview your labels.</p></div>' })); });
+// SEO Page Routes
+app.get('/amazon-seller-label-to-4x6', (req, res) => renderSEOPage(req, res, 'Amazon Seller Label to 4x6 Converter', 'Fix Amazon Seller Central shipping and FNSKU labels that are too large for your thermal printer.', '/amazon-seller-label-to-4x6'));
+app.get('/tiktok-shop-label-fix', (req, res) => renderSEOPage(req, res, 'TikTok Shop Shipping Label 4x6 Fix', 'Instantly resize TikTok Shop labels to the correct 4x6 format for easy thermal printing.', '/tiktok-shop-label-fix'));
+app.get('/walmart-marketplace-label-resizer', (req, res) => renderSEOPage(req, res, 'Walmart Seller Label to 4x6 Resizer', 'Professional resizing for Walmart Marketplace and DSV labels into thermal-ready 4x6 PDFs.', '/walmart-marketplace-label-resizer'));
+app.get('/whatnot-label-to-4x6', (req, res) => renderSEOPage(req, res, 'Whatnot Shipping Label to 4x6 Converter', 'Convert Whatnot live-sale labels into a clean 4x6 format for bulk thermal printing.', '/whatnot-label-to-4x6'));
+app.get('/ebay-8-5x11-to-4x6', (req, res) => renderSEOPage(req, res, 'eBay 8.5x11 to 4x6 Converter', 'Quickly crop and resize eBay PDF labels for your thermal printer.', '/ebay-8-5x11-to-4x6'));
+app.get('/etsy-label-printing-too-small', (req, res) => renderSEOPage(req, res, 'Fix Etsy Label Printing Too Small', 'Force your Etsy labels to fill the 4x6 area. No more tiny barcodes.', '/etsy-label-printing-too-small'));
+app.get('/poshmark-label-to-4x6', (req, res) => renderSEOPage(req, res, 'Poshmark 4x6 Label Converter', 'Convert Poshmark labels to print-ready thermal format.', '/poshmark-label-to-4x6'));
+app.get('/pirateship-label-to-4x6', (req, res) => renderSEOPage(req, res, 'Pirate Ship 4x6 Converter', 'Perfectly scale Pirate Ship labels for any 4x6 printer.', '/pirateship-label-to-4x6'));
+
+app.get('/faq', (req, res) => { res.send(pageTemplate({ title: 'FAQ', content: '<div class="card"><h1>FAQ</h1><p>We support PDF, PNG, and JPG conversion to 4x6.</p></div>' })); });
 
 app.listen(PORT, () => { console.log(`Magic happening on port ${PORT}`); });
