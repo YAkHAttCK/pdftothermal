@@ -30,7 +30,6 @@ function cleanupOldFiles(dir, maxAgeMs) {
   try {
     const now = Date.now();
     const files = fs.readdirSync(dir);
-
     files.forEach(function (file) {
       const filePath = path.join(dir, file);
       const stats = fs.statSync(filePath);
@@ -58,7 +57,7 @@ const storage = multer.diskStorage({
       .basename(file.originalname, ext)
       .replace(/[^a-zA-Z0-9-_]/g, '-')
       .replace(/-+/g, '-')
-      .slice(0, 60);
+      .slice(0, 80);
 
     cb(null, String(Date.now()) + '-' + base + ext);
   }
@@ -88,22 +87,31 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-function bytesToReadable(bytes) {
-  if (!bytes) return 'Unknown size';
-  const units = ['B', 'KB', 'MB', 'GB'];
-  let value = bytes;
-  let unitIndex = 0;
-
-  while (value >= 1024 && unitIndex < units.length - 1) {
-    value /= 1024;
-    unitIndex += 1;
-  }
-
-  return (value >= 10 || unitIndex === 0 ? value.toFixed(0) : value.toFixed(1)) + ' ' + units[unitIndex];
-}
-
 function canonicalUrlFor(pathName) {
   return SITE_URL + (pathName === '/' ? '' : pathName);
+}
+
+function renderFooterLinks() {
+  return [
+    '<a href="/">Home</a>',
+    '<a href="/about">About</a>',
+    '<a href="/articles">Articles</a>',
+    '<a href="/faq">FAQ</a>',
+    '<a href="/privacy">Privacy</a>',
+    '<a href="/terms">Terms</a>',
+    '<a href="/contact">Contact</a>',
+    '<a href="/usps-label-to-4x6">USPS</a>',
+    '<a href="/ups-label-to-4x6">UPS</a>',
+    '<a href="/fedex-label-to-4x6">FedEx</a>',
+    '<a href="/amazon-return-label-to-4x6">Amazon Returns</a>',
+    '<a href="/ebay-label-to-4x6">eBay</a>',
+    '<a href="/etsy-label-to-4x6">Etsy</a>',
+    '<a href="/pdf-to-4x6-label">PDF to 4x6</a>',
+    '<a href="/shipping-label-to-4x6">Shipping Label to 4x6</a>',
+    '<a href="/thermal-label-converter">Thermal Label Converter</a>',
+    '<a href="/pdf-to-thermal-printer">PDF to Thermal Printer</a>',
+    '<a href="/amazon-return-label-to-thermal-printer">Amazon Return Label to Thermal Printer</a>'
+  ].join('\n');
 }
 
 function pageTemplate(opts) {
@@ -181,435 +189,88 @@ function pageTemplate(opts) {
     '        radial-gradient(circle at 80% 0%, rgba(124,58,237,0.07), transparent 24%);',
     '      pointer-events: none;',
     '    }',
-    '    .container {',
-    '      width: min(1180px, calc(100% - 32px));',
-    '      margin: 0 auto;',
-    '      position: relative;',
-    '      z-index: 1;',
-    '    }',
-    '    .nav {',
-    '      display: flex;',
-    '      align-items: center;',
-    '      justify-content: space-between;',
-    '      gap: 18px;',
-    '      padding: 22px 0 12px;',
-    '    }',
-    '    .brand {',
-    '      display: inline-flex;',
-    '      align-items: center;',
-    '      gap: 12px;',
-    '      font-weight: 800;',
-    '      color: var(--text);',
-    '    }',
+    '    .container { width: min(1180px, calc(100% - 32px)); margin: 0 auto; position: relative; z-index: 1; }',
+    '    .nav { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 22px 0 12px; }',
+    '    .brand { display: inline-flex; align-items: center; gap: 12px; font-weight: 800; color: var(--text); }',
     '    .brand:hover { text-decoration: none; }',
-    '    .brand-badge {',
-    '      width: 44px;',
-    '      height: 44px;',
-    '      border-radius: 14px;',
-    '      background: linear-gradient(135deg, var(--primary), var(--accent));',
-    '      display: inline-flex;',
-    '      align-items: center;',
-    '      justify-content: center;',
-    '      color: white;',
-    '      font-size: 14px;',
-    '      font-weight: 800;',
-    '      box-shadow: var(--shadow-md);',
-    '    }',
-    '    .brand-text {',
-    '      display: flex;',
-    '      flex-direction: column;',
-    '      line-height: 1.05;',
-    '    }',
+    '    .brand-badge { width: 44px; height: 44px; border-radius: 14px; background: linear-gradient(135deg, var(--primary), var(--accent)); display: inline-flex; align-items: center; justify-content: center; color: white; font-size: 14px; font-weight: 800; box-shadow: var(--shadow-md); }',
+    '    .brand-text { display: flex; flex-direction: column; line-height: 1.05; }',
     '    .brand-text span:first-child { font-size: 16px; }',
-    '    .brand-text span:last-child {',
-    '      font-size: 11px;',
-    '      color: var(--text-soft);',
-    '      font-weight: 700;',
-    '      margin-top: 2px;',
-    '      letter-spacing: 0.02em;',
-    '      text-transform: uppercase;',
-    '    }',
-    '    .nav-links {',
-    '      display: flex;',
-    '      gap: 18px;',
-    '      flex-wrap: wrap;',
-    '      background: rgba(255,255,255,0.72);',
-    '      backdrop-filter: blur(10px);',
-    '      border: 1px solid rgba(255,255,255,0.7);',
-    '      padding: 10px 14px;',
-    '      border-radius: 999px;',
-    '      box-shadow: var(--shadow-md);',
-    '    }',
-    '    .nav-links a {',
-    '      color: var(--text-soft);',
-    '      font-weight: 700;',
-    '      font-size: 14px;',
-    '    }',
+    '    .brand-text span:last-child { font-size: 11px; color: var(--text-soft); font-weight: 700; margin-top: 2px; letter-spacing: 0.02em; text-transform: uppercase; }',
+    '    .nav-links { display: flex; gap: 18px; flex-wrap: wrap; background: rgba(255,255,255,0.72); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.7); padding: 10px 14px; border-radius: 999px; box-shadow: var(--shadow-md); }',
+    '    .nav-links a { color: var(--text-soft); font-weight: 700; font-size: 14px; }',
     '    .hero { padding: 26px 0 20px; }',
-    '    .hero-grid {',
-    '      display: grid;',
-    '      grid-template-columns: 1.1fr 0.9fr;',
-    '      gap: 24px;',
-    '      align-items: stretch;',
-    '    }',
-    '    .hero-card, .card {',
-    '      background: var(--panel);',
-    '      backdrop-filter: blur(14px);',
-    '      border: 1px solid rgba(255,255,255,0.85);',
-    '      border-radius: 24px;',
-    '      box-shadow: var(--shadow-lg);',
-    '    }',
+    '    .hero-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 24px; align-items: stretch; }',
+    '    .hero-card, .card { background: var(--panel); backdrop-filter: blur(14px); border: 1px solid rgba(255,255,255,0.85); border-radius: 24px; box-shadow: var(--shadow-lg); }',
     '    .hero-copy { padding: 36px; }',
-    '    .eyebrow {',
-    '      display: inline-flex;',
-    '      align-items: center;',
-    '      gap: 8px;',
-    '      background: linear-gradient(135deg, var(--primary-soft), var(--accent-soft));',
-    '      color: var(--primary);',
-    '      border: 1px solid rgba(99,102,241,0.16);',
-    '      padding: 9px 13px;',
-    '      border-radius: 999px;',
-    '      font-size: 13px;',
-    '      font-weight: 800;',
-    '      margin-bottom: 18px;',
-    '    }',
-    '    h1 {',
-    '      margin: 0 0 14px;',
-    '      font-size: clamp(40px, 5vw, 62px);',
-    '      line-height: 0.98;',
-    '      letter-spacing: -0.04em;',
-    '    }',
+    '    .eyebrow { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--primary-soft), var(--accent-soft)); color: var(--primary); border: 1px solid rgba(99,102,241,0.16); padding: 9px 13px; border-radius: 999px; font-size: 13px; font-weight: 800; margin-bottom: 18px; }',
+    '    h1 { margin: 0 0 14px; font-size: clamp(40px, 5vw, 62px); line-height: 0.98; letter-spacing: -0.04em; }',
     '    h2, h3 { letter-spacing: -0.03em; }',
-    '    .lead {',
-    '      margin: 0 0 22px;',
-    '      color: var(--text-soft);',
-    '      font-size: 18px;',
-    '      line-height: 1.65;',
-    '      max-width: 720px;',
-    '    }',
-    '    .hero-points {',
-    '      display: grid;',
-    '      grid-template-columns: repeat(2, minmax(0, 1fr));',
-    '      gap: 12px;',
-    '      margin: 22px 0;',
-    '    }',
-    '    .hero-point {',
-    '      background: rgba(248,250,252,0.95);',
-    '      border: 1px solid var(--line);',
-    '      border-radius: 16px;',
-    '      padding: 15px;',
-    '    }',
-    '    .hero-point strong {',
-    '      display: block;',
-    '      margin-bottom: 4px;',
-    '      font-size: 15px;',
-    '    }',
-    '    .hero-point span {',
-    '      color: var(--text-soft);',
-    '      font-size: 14px;',
-    '      line-height: 1.5;',
-    '    }',
-    '    .trust-line {',
-    '      color: var(--text-soft);',
-    '      font-size: 14px;',
-    '      line-height: 1.6;',
-    '    }',
+    '    .lead { margin: 0 0 22px; color: var(--text-soft); font-size: 18px; line-height: 1.65; max-width: 720px; }',
+    '    .hero-points { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 22px 0; }',
+    '    .hero-point { background: rgba(248,250,252,0.95); border: 1px solid var(--line); border-radius: 16px; padding: 15px; }',
+    '    .hero-point strong { display: block; margin-bottom: 4px; font-size: 15px; }',
+    '    .hero-point span { color: var(--text-soft); font-size: 14px; line-height: 1.5; }',
+    '    .trust-line { color: var(--text-soft); font-size: 14px; line-height: 1.6; }',
     '    .upload-card { padding: 24px; }',
     '    .upload-card h2 { margin: 0 0 10px; font-size: 27px; }',
     '    .upload-card p { margin: 0 0 18px; color: var(--text-soft); line-height: 1.6; }',
-    '    .upload-box {',
-    '      border: 2px dashed rgba(37,99,235,0.28);',
-    '      background: linear-gradient(180deg, rgba(248,251,255,0.95) 0%, rgba(255,255,255,0.9) 100%);',
-    '      border-radius: 18px;',
-    '      padding: 22px;',
-    '    }',
-    '    .dropzone {',
-    '      position: relative;',
-    '      border: 1px dashed rgba(99,102,241,0.25);',
-    '      border-radius: 16px;',
-    '      padding: 18px;',
-    '      background: rgba(255,255,255,0.95);',
-    '      transition: border-color 0.15s ease, background 0.15s ease;',
-    '    }',
-    '    .dropzone.dragover {',
-    '      border-color: var(--primary);',
-    '      background: rgba(219,234,254,0.55);',
-    '    }',
-    '    .upload-box label.main-label {',
-    '      display: block;',
-    '      font-weight: 800;',
-    '      margin-bottom: 10px;',
-    '    }',
-    '    input[type="file"] {',
-    '      width: 100%;',
-    '      padding: 13px;',
-    '      border: 1px solid var(--line);',
-    '      border-radius: 14px;',
-    '      background: white;',
-    '      margin-bottom: 14px;',
-    '    }',
-    '    button, .btn {',
-    '      display: inline-flex;',
-    '      align-items: center;',
-    '      justify-content: center;',
-    '      gap: 8px;',
-    '      min-height: 48px;',
-    '      padding: 0 18px;',
-    '      border-radius: 14px;',
-    '      border: 0;',
-    '      background: linear-gradient(135deg, var(--primary), var(--accent));',
-    '      color: white;',
-    '      font-weight: 800;',
-    '      cursor: pointer;',
-    '      text-decoration: none;',
-    '      box-shadow: 0 14px 28px rgba(59,130,246,0.20);',
-    '    }',
-    '    button:hover, .btn:hover {',
-    '      text-decoration: none;',
-    '      transform: translateY(-1px);',
-    '    }',
-    '    .btn.secondary {',
-    '      background: white;',
-    '      color: var(--primary);',
-    '      border: 1px solid rgba(99,102,241,0.18);',
-    '      box-shadow: var(--shadow-md);',
-    '    }',
-    '    .btn.ghost {',
-    '      background: rgba(255,255,255,0.55);',
-    '      color: var(--text);',
-    '      border: 1px solid var(--line);',
-    '      box-shadow: none;',
-    '    }',
-    '    .microcopy {',
-    '      margin-top: 12px;',
-    '      color: var(--text-soft);',
-    '      font-size: 13px;',
-    '      line-height: 1.5;',
-    '    }',
-    '    .mode-box {',
-    '      margin: 14px 0 16px;',
-    '      padding: 14px;',
-    '      background: white;',
-    '      border: 1px solid var(--line);',
-    '      border-radius: 14px;',
-    '    }',
-    '    .mode-box-title {',
-    '      display: block;',
-    '      font-weight: 800;',
-    '      margin-bottom: 10px;',
-    '    }',
-    '    .mode-option {',
-    '      display: block;',
-    '      margin-bottom: 10px;',
-    '      color: var(--text);',
-    '      font-size: 14px;',
-    '    }',
+    '    .upload-box { border: 2px dashed rgba(37,99,235,0.28); background: linear-gradient(180deg, rgba(248,251,255,0.95) 0%, rgba(255,255,255,0.9) 100%); border-radius: 18px; padding: 22px; }',
+    '    .dropzone { position: relative; border: 1px dashed rgba(99,102,241,0.25); border-radius: 16px; padding: 18px; background: rgba(255,255,255,0.95); transition: border-color 0.15s ease, background 0.15s ease; }',
+    '    .dropzone.dragover { border-color: var(--primary); background: rgba(219,234,254,0.55); }',
+    '    .upload-box label.main-label { display: block; font-weight: 800; margin-bottom: 10px; }',
+    '    input[type="file"] { width: 100%; padding: 13px; border: 1px solid var(--line); border-radius: 14px; background: white; margin-bottom: 14px; }',
+    '    button, .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 18px; border-radius: 14px; border: 0; background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; font-weight: 800; cursor: pointer; text-decoration: none; box-shadow: 0 14px 28px rgba(59,130,246,0.20); }',
+    '    button:hover, .btn:hover { text-decoration: none; transform: translateY(-1px); }',
+    '    .btn.secondary { background: white; color: var(--primary); border: 1px solid rgba(99,102,241,0.18); box-shadow: var(--shadow-md); }',
+    '    .btn.ghost { background: rgba(255,255,255,0.55); color: var(--text); border: 1px solid var(--line); box-shadow: none; }',
+    '    .microcopy { margin-top: 12px; color: var(--text-soft); font-size: 13px; line-height: 1.5; }',
+    '    .mode-box { margin: 14px 0 16px; padding: 14px; background: white; border: 1px solid var(--line); border-radius: 14px; }',
+    '    .mode-box-title { display: block; font-weight: 800; margin-bottom: 10px; }',
+    '    .mode-option { display: block; margin-bottom: 10px; color: var(--text); font-size: 14px; }',
     '    .mode-option:last-child { margin-bottom: 0; }',
-    '    .mode-option small {',
-    '      display: block;',
-    '      color: var(--text-soft);',
-    '      margin-left: 24px;',
-    '      margin-top: 3px;',
-    '      line-height: 1.45;',
-    '    }',
-    '    .selected-file {',
-    '      display: none;',
-    '      margin-top: 12px;',
-    '      padding: 12px 14px;',
-    '      border-radius: 14px;',
-    '      background: rgba(219,234,254,0.55);',
-    '      border: 1px solid rgba(99,102,241,0.14);',
-    '      color: var(--text);',
-    '      font-size: 14px;',
-    '      font-weight: 700;',
-    '    }',
-    '    .selected-file small {',
-    '      display: block;',
-    '      color: var(--text-soft);',
-    '      font-weight: 600;',
-    '      margin-top: 4px;',
-    '    }',
+    '    .mode-option small { display: block; color: var(--text-soft); margin-left: 24px; margin-top: 3px; line-height: 1.45; }',
+    '    .selected-file { display: none; margin-top: 12px; padding: 12px 14px; border-radius: 14px; background: rgba(219,234,254,0.55); border: 1px solid rgba(99,102,241,0.14); color: var(--text); font-size: 14px; font-weight: 700; }',
+    '    .selected-file small { display: block; color: var(--text-soft); font-weight: 600; margin-top: 4px; }',
     '    .section { padding: 20px 0; }',
     '    .section-title { margin: 0 0 16px; font-size: 31px; }',
-    '    .section-subtitle {',
-    '      margin: 0 0 24px;',
-    '      color: var(--text-soft);',
-    '      line-height: 1.65;',
-    '      max-width: 760px;',
-    '    }',
-    '    .cards-3, .cards-2, .article-grid, .result-grid {',
-    '      display: grid;',
-    '      gap: 18px;',
-    '    }',
+    '    .section-subtitle { margin: 0 0 24px; color: var(--text-soft); line-height: 1.65; max-width: 760px; }',
+    '    .cards-3, .cards-2, .article-grid, .result-grid { display: grid; gap: 18px; }',
     '    .cards-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }',
     '    .cards-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }',
     '    .article-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }',
     '    .result-grid { grid-template-columns: 360px 1fr; margin-top: 24px; }',
-    '    .step-card, .info-card, .faq-item, .article-card, .preview-card, .result-summary {',
-    '      background: rgba(255,255,255,0.95);',
-    '      border: 1px solid rgba(255,255,255,0.85);',
-    '      border-radius: 18px;',
-    '      padding: 22px;',
-    '      box-shadow: var(--shadow-md);',
-    '    }',
-    '    .step-number {',
-    '      width: 36px;',
-    '      height: 36px;',
-    '      border-radius: 999px;',
-    '      background: linear-gradient(135deg, var(--primary-soft), var(--accent-soft));',
-    '      color: var(--primary);',
-    '      display: inline-flex;',
-    '      align-items: center;',
-    '      justify-content: center;',
-    '      font-weight: 800;',
-    '      margin-bottom: 12px;',
-    '    }',
-    '    .step-card h3, .info-card h3, .faq-item h3, .article-card h3, .preview-card h3, .result-summary h3 {',
-    '      margin: 0 0 8px;',
-    '      font-size: 19px;',
-    '    }',
-    '    .step-card p, .info-card p, .faq-item p, .article-card p, .preview-card p, .result-summary p, .result-card p {',
-    '      margin: 0;',
-    '      color: var(--text-soft);',
-    '      line-height: 1.65;',
-    '    }',
-    '    .article-card-meta, .button-row, .badge-row {',
-    '      display: flex;',
-    '      flex-wrap: wrap;',
-    '      gap: 10px;',
-    '    }',
+    '    .step-card, .info-card, .faq-item, .article-card, .preview-card, .result-summary { background: rgba(255,255,255,0.95); border: 1px solid rgba(255,255,255,0.85); border-radius: 18px; padding: 22px; box-shadow: var(--shadow-md); }',
+    '    .step-number { width: 36px; height: 36px; border-radius: 999px; background: linear-gradient(135deg, var(--primary-soft), var(--accent-soft)); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-weight: 800; margin-bottom: 12px; }',
+    '    .step-card h3, .info-card h3, .faq-item h3, .article-card h3, .preview-card h3, .result-summary h3 { margin: 0 0 8px; font-size: 19px; }',
+    '    .step-card p, .info-card p, .faq-item p, .article-card p, .preview-card p, .result-summary p, .result-card p { margin: 0; color: var(--text-soft); line-height: 1.65; }',
+    '    .article-card-meta, .button-row, .badge-row { display: flex; flex-wrap: wrap; gap: 10px; }',
     '    .button-row { margin-top: 22px; }',
-    '    .badge {',
-    '      display: inline-flex;',
-    '      align-items: center;',
-    '      padding: 8px 12px;',
-    '      border-radius: 999px;',
-    '      background: rgba(248,250,252,0.95);',
-    '      border: 1px solid var(--line);',
-    '      font-size: 13px;',
-    '      font-weight: 800;',
-    '      color: var(--text);',
-    '    }',
-    '    .warning-box {',
-    '      margin-top: 18px;',
-    '      padding: 14px;',
-    '      border: 1px solid #fed7aa;',
-    '      background: var(--warning-bg);',
-    '      border-radius: 14px;',
-    '      color: var(--warning);',
-    '      line-height: 1.6;',
-    '      font-size: 14px;',
-    '    }',
-    '    .cta {',
-    '      margin: 20px 0 34px;',
-    '      background: radial-gradient(circle at top right, rgba(255,255,255,0.16), transparent 26%), linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #4f46e5 100%);',
-    '      color: white;',
-    '      border-radius: 24px;',
-    '      padding: 32px;',
-    '      box-shadow: var(--shadow-lg);',
-    '    }',
+    '    .badge { display: inline-flex; align-items: center; padding: 8px 12px; border-radius: 999px; background: rgba(248,250,252,0.95); border: 1px solid var(--line); font-size: 13px; font-weight: 800; color: var(--text); }',
+    '    .warning-box { margin-top: 18px; padding: 14px; border: 1px solid #fed7aa; background: var(--warning-bg); border-radius: 14px; color: var(--warning); line-height: 1.6; font-size: 14px; }',
+    '    .cta { margin: 20px 0 34px; background: radial-gradient(circle at top right, rgba(255,255,255,0.16), transparent 26%), linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #4f46e5 100%); color: white; border-radius: 24px; padding: 32px; box-shadow: var(--shadow-lg); }',
     '    .cta h2 { margin: 0 0 10px; font-size: 31px; }',
-    '    .cta p {',
-    '      margin: 0 0 18px;',
-    '      color: rgba(255,255,255,0.84);',
-    '      line-height: 1.7;',
-    '      max-width: 760px;',
-    '    }',
-    '    .cta .btn {',
-    '      background: white;',
-    '      color: var(--primary);',
-    '      box-shadow: none;',
-    '    }',
-    '    .footer {',
-    '      padding: 26px 0 48px;',
-    '      color: var(--text-soft);',
-    '      font-size: 14px;',
-    '    }',
-    '    .footer-links {',
-    '      display: flex;',
-    '      flex-wrap: wrap;',
-    '      gap: 16px;',
-    '      margin-top: 12px;',
-    '    }',
-    '    .result-card {',
-    '      max-width: 1180px;',
-    '      margin: 44px auto;',
-    '      padding: 30px;',
-    '    }',
-    '    .status {',
-    '      display: inline-flex;',
-    '      align-items: center;',
-    '      gap: 8px;',
-    '      border-radius: 999px;',
-    '      padding: 8px 12px;',
-    '      font-weight: 800;',
-    '      margin-bottom: 16px;',
-    '    }',
-    '    .status.success {',
-    '      background: #ecfdf3;',
-    '      color: var(--success);',
-    '      border: 1px solid #bbf7d0;',
-    '    }',
-    '    .status.error {',
-    '      background: #fef2f2;',
-    '      color: var(--error);',
-    '      border: 1px solid #fecaca;',
-    '    }',
-    '    .meta-list {',
-    '      display: grid;',
-    '      gap: 10px;',
-    '    }',
-    '    .meta-row {',
-    '      display: flex;',
-    '      justify-content: space-between;',
-    '      gap: 14px;',
-    '      align-items: flex-start;',
-    '      padding: 10px 0;',
-    '      border-bottom: 1px dashed rgba(148,163,184,0.24);',
-    '    }',
-    '    .meta-row:last-child {',
-    '      border-bottom: 0;',
-    '      padding-bottom: 0;',
-    '    }',
-    '    .meta-key {',
-    '      font-size: 13px;',
-    '      color: var(--text-soft);',
-    '      font-weight: 700;',
-    '    }',
-    '    .meta-value {',
-    '      font-size: 14px;',
-    '      font-weight: 800;',
-    '      color: var(--text);',
-    '      text-align: right;',
-    '      word-break: break-word;',
-    '    }',
-    '    .preview-frame {',
-    '      width: 100%;',
-    '      height: 760px;',
-    '      border: 1px solid rgba(148,163,184,0.25);',
-    '      border-radius: 16px;',
-    '      background: #f8fafc;',
-    '    }',
-    '    .preview-tip {',
-    '      margin-top: 12px;',
-    '      font-size: 13px;',
-    '      color: var(--text-soft);',
-    '    }',
-    '    .not-found {',
-    '      max-width: 760px;',
-    '      margin: 50px auto;',
-    '      padding: 30px;',
-    '    }',
+    '    .cta p { margin: 0 0 18px; color: rgba(255,255,255,0.84); line-height: 1.7; max-width: 760px; }',
+    '    .cta .btn { background: white; color: var(--primary); box-shadow: none; }',
+    '    .footer { padding: 26px 0 48px; color: var(--text-soft); font-size: 14px; }',
+    '    .footer-links { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }',
+    '    .result-card { max-width: 1180px; margin: 44px auto; padding: 30px; }',
+    '    .status { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 8px 12px; font-weight: 800; margin-bottom: 16px; }',
+    '    .status.success { background: #ecfdf3; color: var(--success); border: 1px solid #bbf7d0; }',
+    '    .status.error { background: #fef2f2; color: var(--error); border: 1px solid #fecaca; }',
+    '    .meta-list { display: grid; gap: 10px; }',
+    '    .meta-row { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; padding: 10px 0; border-bottom: 1px dashed rgba(148,163,184,0.24); }',
+    '    .meta-row:last-child { border-bottom: 0; padding-bottom: 0; }',
+    '    .meta-key { font-size: 13px; color: var(--text-soft); font-weight: 700; }',
+    '    .meta-value { font-size: 14px; font-weight: 800; color: var(--text); text-align: right; word-break: break-word; }',
+    '    .preview-frame { width: 100%; height: 760px; border: 1px solid rgba(148,163,184,0.25); border-radius: 16px; background: #f8fafc; }',
+    '    .preview-tip { margin-top: 12px; font-size: 13px; color: var(--text-soft); }',
+    '    .not-found { max-width: 760px; margin: 50px auto; padding: 30px; }',
     '    @media (max-width: 980px) {',
-    '      .hero-grid, .cards-3, .cards-2, .article-grid, .result-grid {',
-    '        grid-template-columns: 1fr;',
-    '      }',
+    '      .hero-grid, .cards-3, .cards-2, .article-grid, .result-grid { grid-template-columns: 1fr; }',
     '      .hero-copy, .upload-card { padding: 24px; }',
     '      .hero-points { grid-template-columns: 1fr; }',
-    '      .nav {',
-    '        flex-direction: column;',
-    '        align-items: flex-start;',
-    '      }',
+    '      .nav { flex-direction: column; align-items: flex-start; }',
     '      .nav-links { border-radius: 18px; }',
     '      .preview-frame { height: 560px; }',
     '    }',
@@ -621,10 +282,7 @@ function pageTemplate(opts) {
     '      <header class="nav">',
     '        <a class="brand" href="/">',
     '          <span class="brand-badge">PT</span>',
-    '          <span class="brand-text">',
-    '            <span>PDF to Thermal</span>',
-    '            <span>4x6 label converter</span>',
-    '          </span>',
+    '          <span class="brand-text"><span>PDF to Thermal</span><span>4x6 label converter</span></span>',
     '        </a>',
     '        <nav class="nav-links">',
     '          <a href="/">Home</a>',
@@ -640,19 +298,7 @@ function pageTemplate(opts) {
     '      <footer class="footer">',
     '        <div>PDF to Thermal helps turn shipping labels into 4x6 thermal-printer-ready files.</div>',
     '        <div class="footer-links">',
-    '          <a href="/">Home</a>',
-    '          <a href="/about">About</a>',
-    '          <a href="/articles">Articles</a>',
-    '          <a href="/faq">FAQ</a>',
-    '          <a href="/privacy">Privacy</a>',
-    '          <a href="/terms">Terms</a>',
-    '          <a href="/contact">Contact</a>',
-    '          <a href="/usps-label-to-4x6">USPS</a>',
-    '          <a href="/ups-label-to-4x6">UPS</a>',
-    '          <a href="/fedex-label-to-4x6">FedEx</a>',
-    '          <a href="/amazon-return-label-to-4x6">Amazon Returns</a>',
-    '          <a href="/ebay-label-to-4x6">eBay</a>',
-    '          <a href="/etsy-label-to-4x6">Etsy</a>',
+    renderFooterLinks(),
     '        </div>',
     '      </footer>',
     '    </div>',
@@ -663,193 +309,77 @@ function pageTemplate(opts) {
   ].join('\n');
 }
 
-function renderSimplePage(pathName, title, description, heading, bodyHtml) {
-  return pageTemplate({
-    title: title,
-    description: description,
-    canonicalPath: pathName,
-    content: [
-      '<section class="section">',
-      '  <div class="card" style="padding: 28px;">',
-      '    <h1>' + escapeHtml(heading) + '</h1>',
-      bodyHtml,
-      '  </div>',
-      '</section>'
-    ].join('\n')
-  });
-}
-
-async function imageToPdf(inputPath, outputPath, mode) {
-  const metadata = await sharp(inputPath).metadata();
-  const pagePortrait = { width: 1200, height: 1800 };
-  let pipeline = sharp(inputPath);
-
-  if (mode === 'autorotate' && metadata.width && metadata.height && metadata.width > metadata.height) {
-    pipeline = pipeline.rotate(90);
+function bytesToReadable(bytes) {
+  if (!bytes) return 'Unknown size';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let value = bytes;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
   }
-
-  const fitMode = mode === 'fill' ? 'cover' : 'contain';
-
-  const imageBuffer = await pipeline
-    .resize(pagePortrait.width, pagePortrait.height, {
-      fit: fitMode,
-      position: 'center',
-      background: { r: 255, g: 255, b: 255, alpha: 1 }
-    })
-    .png()
-    .toBuffer();
-
-  const pdfDoc = await PDFDocument.create();
-  const page = pdfDoc.addPage([288, 432]);
-  const embedded = await pdfDoc.embedPng(imageBuffer);
-
-  page.drawImage(embedded, {
-    x: 0,
-    y: 0,
-    width: 288,
-    height: 432
-  });
-
-  const pdfBytes = await pdfDoc.save();
-  fs.writeFileSync(outputPath, pdfBytes);
-
-  return { pageCount: 1 };
+  return (value >= 10 || unitIndex === 0 ? value.toFixed(0) : value.toFixed(1)) + ' ' + units[unitIndex];
 }
 
-async function pdfTo4x6(inputPath, outputPath, mode) {
-  const existingPdfBytes = fs.readFileSync(inputPath);
-  const existingPdf = await PDFDocument.load(existingPdfBytes);
-  const newPdf = await PDFDocument.create();
-
-  const pageIndices = existingPdf.getPageIndices();
-  const copiedPages = await newPdf.copyPages(existingPdf, pageIndices);
-
-  copiedPages.forEach(function (copiedPage) {
-    const sourceWidth = copiedPage.getWidth();
-    const sourceHeight = copiedPage.getHeight();
-
-    const targetWidth = 288;
-    const targetHeight = 432;
-    const page = newPdf.addPage([targetWidth, targetHeight]);
-
-    const shouldRotate = mode === 'autorotate' && sourceWidth > sourceHeight;
-    const effectiveWidth = shouldRotate ? sourceHeight : sourceWidth;
-    const effectiveHeight = shouldRotate ? sourceWidth : sourceHeight;
-
-    const scale = mode === 'fill'
-      ? Math.max(targetWidth / effectiveWidth, targetHeight / effectiveHeight)
-      : Math.min(targetWidth / effectiveWidth, targetHeight / effectiveHeight);
-
-    const drawnWidth = effectiveWidth * scale;
-    const drawnHeight = effectiveHeight * scale;
-    const x = (targetWidth - drawnWidth) / 2;
-    const y = (targetHeight - drawnHeight) / 2;
-
-    if (shouldRotate) {
-      page.drawPage(copiedPage, {
-        x: targetWidth - x,
-        y: y,
-        xScale: scale,
-        yScale: scale,
-        rotate: degrees(90)
-      });
-    } else {
-      page.drawPage(copiedPage, {
-        x: x,
-        y: y,
-        xScale: scale,
-        yScale: scale
-      });
-    }
-  });
-
-  const pdfBytes = await newPdf.save();
-  fs.writeFileSync(outputPath, pdfBytes);
-
-  return { pageCount: copiedPages.length };
-}
-
-const articleTitles = [
-  ['best-thermal-printer-for-ebay-sellers', 'Best Thermal Printer for eBay Sellers', 'What eBay sellers should look for in a thermal printer and how to avoid common label-printing headaches.', 'Buyer Guide'],
-  ['best-thermal-printer-for-etsy-sellers', 'Best Thermal Printer for Etsy Sellers', 'A practical guide to choosing a thermal printer for Etsy shipping and home-business workflows.', 'Buyer Guide'],
-  ['how-to-print-amazon-return-labels-on-4x6', 'How to Print Amazon Return Labels on 4x6', 'How to handle Amazon return labels that do not arrive in a clean 4x6 format.', 'How-To'],
-  ['rollo-vs-munbyn', 'Rollo vs Munbyn for Shipping Labels', 'A simple comparison of two popular thermal-printer brands for 4x6 label printing.', 'Comparison'],
-  ['pdf-shipping-label-wont-print-on-thermal-printer', 'PDF Shipping Label Won’t Print on a Thermal Printer', 'The most common reasons a PDF label prints badly on a thermal printer and how to fix it.', 'Troubleshooting']
-];
-
-const allArticles = articleTitles.map(function (item) {
-  return {
-    slug: item[0],
-    title: item[1],
-    description: item[2],
-    category: item[3],
-    readTime: '4 min read',
-    intro: item[2],
-    sections: [
-      {
-        heading: 'Why it matters',
-        paragraphs: [
-          'A clean shipping workflow saves time and reduces waste.',
-          'When files, printers, and labels agree with each other, everything becomes easier.'
-        ]
-      },
-      {
-        heading: 'What to focus on',
-        paragraphs: [
-          'Focus on repeatability instead of one lucky successful print.',
-          'The goal is a workflow you can trust every day.'
-        ]
-      },
-      {
-        heading: 'Where PDF to Thermal fits',
-        paragraphs: [
-          'Many problems start with awkward source files.',
-          'A 4x6 conversion step often removes that friction before printing.'
-        ]
-      }
-    ]
-  };
+app.get('/healthz', function (_req, res) {
+  res.status(200).send('ok');
 });
 
-function articlePageHtml(article) {
-  const articlePath = '/articles/' + article.slug;
-  return pageTemplate({
-    title: article.title + ' | PDF to Thermal',
-    description: article.description,
-    canonicalPath: articlePath,
-    content: [
-      '<section class="section">',
-      '  <div class="card" style="padding:28px;">',
-      '    <div class="badge-row">',
-      '      <span class="badge">' + escapeHtml(article.category) + '</span>',
-      '      <span class="badge">' + escapeHtml(article.readTime) + '</span>',
-      '    </div>',
-      '    <h1 style="margin-top:14px;">' + escapeHtml(article.title) + '</h1>',
-      '    <p class="lead">' + escapeHtml(article.intro) + '</p>',
-      '  </div>',
-      '</section>',
-      '<section class="section">',
-      '  <div class="cards-3">',
-      article.sections.map(function (section) {
-        return [
-          '<div class="info-card">',
-          '  <h3>' + escapeHtml(section.heading) + '</h3>',
-          section.paragraphs.map(function (p) {
-            return '<p style="margin-bottom:12px;">' + escapeHtml(p) + '</p>';
-          }).join(''),
-          '</div>'
-        ].join('\n');
-      }).join('\n'),
-      '  </div>',
-      '</section>',
-      '<section class="cta">',
-      '  <h2>Need a cleaner 4x6 label workflow?</h2>',
-      '  <p>When awkward file layouts are the real problem, a clean 4x6 conversion step usually saves more time than fighting printer settings over and over.</p>',
-      '  <a class="btn" href="/">Use PDF to Thermal</a>',
-      '</section>'
-    ].join('\n')
-  });
-}
+app.get('/robots.txt', function (_req, res) {
+  res.type('text/plain');
+  res.send('User-agent: *\nAllow: /\n\nSitemap: ' + SITE_URL + '/sitemap.xml');
+});
+
+app.get('/sitemap.xml', function (_req, res) {
+  const urls = [
+    '/',
+    '/about',
+    '/articles',
+    '/faq',
+    '/privacy',
+    '/terms',
+    '/contact',
+    '/usps-label-to-4x6',
+    '/ups-label-to-4x6',
+    '/fedex-label-to-4x6',
+    '/amazon-return-label-to-4x6',
+    '/ebay-label-to-4x6',
+    '/etsy-label-to-4x6',
+    '/pdf-to-4x6-label',
+    '/shipping-label-to-4x6',
+    '/thermal-label-converter',
+    '/pdf-to-thermal-printer',
+    '/amazon-return-label-to-thermal-printer'
+  ].concat(allArticles.map(function (article) {
+    return '/articles/' + article.slug;
+  }));
+
+  res.type('application/xml');
+  res.send([
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    urls.map(function (url) {
+      return '  <url><loc>' + SITE_URL + (url === '/' ? '' : url) + '</loc></url>';
+    }).join('\n'),
+    '</urlset>'
+  ].join('\n'));
+});
+
+app.get('/favicon.svg', function (_req, res) {
+  res.type('image/svg+xml');
+  res.send([
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">',
+    '  <defs>',
+    '    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">',
+    '      <stop offset="0%" stop-color="#2563eb"/>',
+    '      <stop offset="100%" stop-color="#60a5fa"/>',
+    '    </linearGradient>',
+    '  </defs>',
+    '  <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#g)"/>',
+    '  <text x="32" y="38" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="800" fill="#ffffff">PT</text>',
+    '</svg>'
+  ].join('\n'));
+});
 
 app.get('/', function (_req, res) {
   res.send(pageTemplate({
@@ -918,23 +448,20 @@ app.get('/', function (_req, res) {
       '  </div>',
       '</section>',
       '<section class="section">',
+      '  <h2 class="section-title">Built for common label problems</h2>',
+      '  <p class="section-subtitle">Many labels arrive in awkward PDFs or image formats that do not line up well with a thermal printer.</p>',
+      '  <div class="cards-3">',
+      '    <div class="info-card"><h3>USPS</h3><p>Convert common USPS labels into cleaner 4x6 output.</p></div>',
+      '    <div class="info-card"><h3>UPS</h3><p>Handle page-size mismatches before you print.</p></div>',
+      '    <div class="info-card"><h3>FedEx</h3><p>Normalize label layouts for thermal printers.</p></div>',
+      '  </div>',
+      '</section>',
+      '<section class="section">',
       '  <h2 class="section-title">Read before you print</h2>',
       '  <div class="article-grid">',
-      allArticles.map(function (article) {
-        return [
-          '<article class="article-card">',
-          '  <div class="article-card-meta">',
-          '    <span class="badge">' + escapeHtml(article.category) + '</span>',
-          '    <span class="badge">' + escapeHtml(article.readTime) + '</span>',
-          '  </div>',
-          '  <h3>' + escapeHtml(article.title) + '</h3>',
-          '  <p>' + escapeHtml(article.description) + '</p>',
-          '  <div class="button-row">',
-          '    <a class="btn secondary" href="/articles/' + escapeHtml(article.slug) + '">Read Article</a>',
-          '  </div>',
-          '</article>'
-        ].join('\n');
-      }).join('\n'),
+      allArticles.slice(0, 6).map(function (article) {
+        return '<article class="article-card"><div class="article-card-meta"><span class="badge">' + escapeHtml(article.category) + '</span><span class="badge">' + escapeHtml(article.readTime) + '</span></div><h3>' + escapeHtml(article.title) + '</h3><p>' + escapeHtml(article.description) + '</p><div class="button-row"><a class="btn secondary" href="/articles/' + escapeHtml(article.slug) + '">Read Article</a></div></article>';
+      }).join(''),
       '  </div>',
       '</section>',
       '<section class="cta">',
@@ -955,40 +482,23 @@ app.get('/', function (_req, res) {
       '    const units = ["B", "KB", "MB", "GB"];',
       '    let value = bytes;',
       '    let unitIndex = 0;',
-      '    while (value >= 1024 && unitIndex < units.length - 1) {',
-      '      value /= 1024;',
-      '      unitIndex += 1;',
-      '    }',
+      '    while (value >= 1024 && unitIndex < units.length - 1) { value /= 1024; unitIndex += 1; }',
       '    return (value >= 10 || unitIndex === 0 ? value.toFixed(0) : value.toFixed(1)) + " " + units[unitIndex];',
       '  }',
       '  function setFileDisplay(file) {',
-      '    if (!file) {',
-      '      selectedFile.style.display = "none";',
-      '      selectedFile.innerHTML = "";',
-      '      return;',
-      '    }',
+      '    if (!file) { selectedFile.style.display = "none"; selectedFile.innerHTML = ""; return; }',
       '    selectedFile.style.display = "block";',
-      '    selectedFile.innerHTML = "<strong>Selected file:</strong> " +',
-      '      file.name.replace(/</g, "&lt;").replace(/>/g, "&gt;") +',
-      '      "<small>" + bytesToReadableClient(file.size) + "</small>";',
+      '    selectedFile.innerHTML = "<strong>Selected file:</strong> " + file.name.replace(/</g, "&lt;").replace(/>/g, "&gt;") + "<small>" + bytesToReadableClient(file.size) + "</small>";',
       '  }',
       '  fileInput.addEventListener("change", function () {',
       '    const file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;',
       '    setFileDisplay(file);',
       '  });',
       '  ["dragenter", "dragover"].forEach(function (eventName) {',
-      '    dropzone.addEventListener(eventName, function (e) {',
-      '      e.preventDefault();',
-      '      e.stopPropagation();',
-      '      dropzone.classList.add("dragover");',
-      '    });',
+      '    dropzone.addEventListener(eventName, function (e) { e.preventDefault(); e.stopPropagation(); dropzone.classList.add("dragover"); });',
       '  });',
       '  ["dragleave", "drop"].forEach(function (eventName) {',
-      '    dropzone.addEventListener(eventName, function (e) {',
-      '      e.preventDefault();',
-      '      e.stopPropagation();',
-      '      dropzone.classList.remove("dragover");',
-      '    });',
+      '    dropzone.addEventListener(eventName, function (e) { e.preventDefault(); e.stopPropagation(); dropzone.classList.remove("dragover"); });',
       '  });',
       '  dropzone.addEventListener("drop", function (e) {',
       '    const files = e.dataTransfer && e.dataTransfer.files ? e.dataTransfer.files : null;',
@@ -1008,20 +518,7 @@ app.get('/about', function (_req, res) {
     'About | PDF to Thermal',
     'Learn what PDF to Thermal is built for and who it helps.',
     'About PDF to Thermal',
-    [
-      '<p>PDF to Thermal is a focused 4x6 label conversion tool. It exists to solve one recurring problem: shipping labels often arrive in formats that are annoying to print on thermal label stock.</p>',
-      '<p>Instead of acting like a giant all-purpose file converter, PDF to Thermal is designed around shipping, returns, and seller workflows where clean 4x6 output matters.</p>',
-      '<div class="cards-2" style="margin-top:18px;">',
-      '  <div class="info-card">',
-      '    <h3>Who it helps</h3>',
-      '    <p>Marketplace sellers, home businesses, return-heavy workflows, and anyone who wants a cleaner 4x6 print path for PDF or image labels.</p>',
-      '  </div>',
-      '  <div class="info-card">',
-      '    <h3>What it focuses on</h3>',
-      '    <p>Fast upload, simple conversion modes, multi-page PDF support, preview before download, and fewer layout headaches before printing.</p>',
-      '  </div>',
-      '</div>'
-    ].join('\n')
+    '<p>PDF to Thermal is a focused 4x6 label conversion tool. It exists to solve one recurring problem: shipping labels often arrive in formats that are annoying to print on thermal label stock.</p><p>Instead of acting like a giant all-purpose file converter, PDF to Thermal is designed around shipping, returns, and seller workflows where clean 4x6 output matters.</p><div class="cards-2" style="margin-top:18px;"><div class="info-card"><h3>Who it helps</h3><p>Marketplace sellers, home businesses, return-heavy workflows, and anyone who wants a cleaner 4x6 print path for PDF or image labels.</p></div><div class="info-card"><h3>What it focuses on</h3><p>Fast upload, simple conversion modes, multi-page PDF support, preview before download, and fewer layout headaches before printing.</p></div></div>'
   ));
 });
 
@@ -1030,33 +527,9 @@ app.get('/articles', function (_req, res) {
     title: 'Articles | PDF to Thermal',
     description: 'Guides, comparisons, and troubleshooting articles for 4x6 shipping labels and thermal printing.',
     canonicalPath: '/articles',
-    content: [
-      '<section class="section">',
-      '  <div class="card" style="padding:28px;">',
-      '    <h1>Shipping label and thermal printing articles</h1>',
-      '    <p class="lead">Browse practical guides, comparisons, and troubleshooting articles built around 4x6 shipping label workflows.</p>',
-      '  </div>',
-      '</section>',
-      '<section class="section">',
-      '  <div class="article-grid">',
-      allArticles.map(function (article) {
-        return [
-          '<article class="article-card">',
-          '  <div class="article-card-meta">',
-          '    <span class="badge">' + escapeHtml(article.category) + '</span>',
-          '    <span class="badge">' + escapeHtml(article.readTime) + '</span>',
-          '  </div>',
-          '  <h3>' + escapeHtml(article.title) + '</h3>',
-          '  <p>' + escapeHtml(article.description) + '</p>',
-          '  <div class="button-row">',
-          '    <a class="btn secondary" href="/articles/' + escapeHtml(article.slug) + '">Read Article</a>',
-          '  </div>',
-          '</article>'
-        ].join('\n');
-      }).join('\n'),
-      '  </div>',
-      '</section>'
-    ].join('\n')
+    content: '<section class="section"><div class="card" style="padding:28px;"><h1>Shipping label and thermal printing articles</h1><p class="lead">Browse practical guides, comparisons, and troubleshooting articles built around 4x6 shipping label workflows.</p><div class="badge-row"><span class="badge">' + allArticles.length + ' articles</span><span class="badge">Buyer guides</span><span class="badge">Troubleshooting</span><span class="badge">How-to workflows</span></div></div></section><section class="section"><div class="article-grid">' + allArticles.map(function (article) {
+      return '<article class="article-card"><div class="article-card-meta"><span class="badge">' + escapeHtml(article.category) + '</span><span class="badge">' + escapeHtml(article.readTime) + '</span></div><h3>' + escapeHtml(article.title) + '</h3><p>' + escapeHtml(article.description) + '</p><div class="button-row"><a class="btn secondary" href="/articles/' + escapeHtml(article.slug) + '">Read Article</a></div></article>';
+    }).join('') + '</div></section>'
   }));
 });
 
@@ -1066,133 +539,71 @@ allArticles.forEach(function (article) {
   });
 });
 
-app.get('/faq', function (_req, res) {
-  res.send(renderSimplePage(
-    '/faq',
-    'FAQ | PDF to Thermal',
-    'Frequently asked questions about PDF to Thermal.',
-    'Frequently asked questions',
-    [
-      '<div class="cards-2">',
-      '  <div class="faq-item"><h3>What file types can I upload?</h3><p>PDF, PNG, JPG, and JPEG are supported.</p></div>',
-      '  <div class="faq-item"><h3>What size is the output?</h3><p>The tool creates a 4x6 PDF intended for common thermal label printers.</p></div>',
-      '  <div class="faq-item"><h3>Does it convert every page in a PDF?</h3><p>Yes. PDF uploads are converted page by page into a multi-page 4x6 PDF output.</p></div>',
-      '  <div class="faq-item"><h3>Can I preview the result before downloading?</h3><p>Yes. The completion page includes an on-screen PDF preview.</p></div>',
-      '  <div class="faq-item"><h3>Does Fill mode crop?</h3><p>It can. Fill mode increases page coverage and may crop outer edges slightly.</p></div>',
-      '  <div class="faq-item"><h3>What does Auto Rotate do?</h3><p>It helps wide labels fit better on a portrait 4x6 page.</p></div>',
-      '</div>'
-    ].join('\n')
-  ));
-});
+function addSimpleContentRoute(routePath, pageTitle, pageDescription, heading, html) {
+  app.get(routePath, function (_req, res) {
+    res.send(renderSimplePage(routePath, pageTitle, pageDescription, heading, html));
+  });
+}
 
-app.get('/privacy', function (_req, res) {
-  res.send(renderSimplePage(
-    '/privacy',
-    'Privacy Policy | PDF to Thermal',
-    'Privacy information for PDF to Thermal.',
-    'Privacy Policy',
-    [
-      '<div class="cards-2">',
-      '  <div class="info-card"><h3>Uploaded files</h3><p>PDF to Thermal temporarily processes files you upload in order to generate a converted 4x6 output file.</p></div>',
-      '  <div class="info-card"><h3>Storage</h3><p>Uploaded files and generated outputs are stored for a limited period, then cleaned up automatically as part of normal site operation.</p></div>',
-      '  <div class="info-card"><h3>Sensitive documents</h3><p>Do not upload highly sensitive, confidential, or regulated documents.</p></div>',
-      '  <div class="info-card"><h3>Questions</h3><p>If you have privacy questions, contact <strong>' + escapeHtml(SUPPORT_EMAIL) + '</strong>.</p></div>',
-      '</div>'
-    ].join('\n')
-  ));
-});
+addSimpleContentRoute('/faq', 'FAQ | PDF to Thermal', 'Frequently asked questions about PDF to Thermal.', 'Frequently asked questions',
+  '<div class="cards-2"><div class="faq-item"><h3>What file types can I upload?</h3><p>PDF, PNG, JPG, and JPEG are supported in the current version.</p></div><div class="faq-item"><h3>What size is the output?</h3><p>The tool creates a 4x6 PDF intended for common thermal label printers.</p></div><div class="faq-item"><h3>Does it convert every page in a PDF now?</h3><p>Yes. PDF uploads are converted page by page into a multi-page 4x6 PDF output.</p></div><div class="faq-item"><h3>Can I preview the result before downloading?</h3><p>Yes. The completion page includes an on-screen PDF preview.</p></div><div class="faq-item"><h3>What does Crop tighter to fill 4x6 do?</h3><p>It scales more aggressively so the label fills more of the page, which can crop edges slightly.</p></div><div class="faq-item"><h3>What does Rotate for best fit do?</h3><p>It rotates wide image labels, and attempts a better fit for wide PDF pages as well.</p></div></div>'
+);
 
-app.get('/terms', function (_req, res) {
-  res.send(renderSimplePage(
-    '/terms',
-    'Terms | PDF to Thermal',
-    'Terms of use for PDF to Thermal.',
-    'Terms of Use',
-    [
-      '<div class="cards-2">',
-      '  <div class="info-card"><h3>Service basis</h3><p>PDF to Thermal is provided on an as-is, as-available basis.</p></div>',
-      '  <div class="info-card"><h3>Uploads</h3><p>You agree not to upload unlawful content, malicious files, or material you do not have the right to process.</p></div>',
-      '  <div class="info-card"><h3>Your responsibility</h3><p>You are responsible for reviewing converted output before using it for shipment or business operations.</p></div>',
-      '  <div class="info-card"><h3>Support</h3><p>Questions about these terms can be directed to <strong>' + escapeHtml(SUPPORT_EMAIL) + '</strong>.</p></div>',
-      '</div>'
-    ].join('\n')
-  ));
-});
+addSimpleContentRoute('/privacy', 'Privacy Policy | PDF to Thermal', 'Privacy information for PDF to Thermal.', 'Privacy Policy',
+  '<div class="cards-2"><div class="info-card"><h3>Uploaded files</h3><p>PDF to Thermal temporarily processes files you upload in order to generate a converted 4x6 output file.</p></div><div class="info-card"><h3>Storage</h3><p>Uploaded files and generated outputs are stored for a limited period to allow processing and download, then are cleaned up automatically as part of normal site operation.</p></div><div class="info-card"><h3>Sensitive documents</h3><p>Do not upload highly sensitive, confidential, or regulated documents.</p></div><div class="info-card"><h3>Questions</h3><p>If you have privacy questions, contact <strong>' + escapeHtml(SUPPORT_EMAIL) + '</strong>.</p></div></div>'
+);
 
-app.get('/contact', function (_req, res) {
-  res.send(renderSimplePage(
-    '/contact',
-    'Contact | PDF to Thermal',
-    'Contact PDF to Thermal.',
-    'Contact',
-    [
-      '<div class="cards-2">',
-      '  <div class="info-card"><h3>Email</h3><p><strong>' + escapeHtml(SUPPORT_EMAIL) + '</strong></p></div>',
-      '  <div class="info-card"><h3>Best info to include</h3><p>Your file type, selected mode, and what happened after upload.</p></div>',
-      '</div>'
-    ].join('\n')
-  ));
-});
+addSimpleContentRoute('/terms', 'Terms | PDF to Thermal', 'Terms of use for PDF to Thermal.', 'Terms of Use',
+  '<div class="cards-2"><div class="info-card"><h3>Service basis</h3><p>PDF to Thermal is provided on an as-is, as-available basis.</p></div><div class="info-card"><h3>Uploads</h3><p>You agree not to upload unlawful content, malicious files, or material you do not have the right to process.</p></div><div class="info-card"><h3>Your responsibility</h3><p>You are responsible for reviewing converted output before using it for shipment or business operations.</p></div><div class="info-card"><h3>Support</h3><p>Questions about these terms can be directed to <strong>' + escapeHtml(SUPPORT_EMAIL) + '</strong>.</p></div></div>'
+);
 
-app.get('/usps-label-to-4x6', function (_req, res) {
-  res.send(renderSimplePage(
-    '/usps-label-to-4x6',
-    'USPS Label to 4x6 | PDF to Thermal',
-    'Convert a USPS shipping label into a 4x6 thermal-printer-ready PDF.',
-    'Convert USPS labels to 4x6',
-    '<p>Use PDF to Thermal to turn USPS labels into a cleaner 4x6 PDF for thermal printing.</p>'
-  ));
-});
+addSimpleContentRoute('/contact', 'Contact | PDF to Thermal', 'Contact PDF to Thermal.', 'Contact',
+  '<div class="cards-2"><div class="info-card"><h3>Email</h3><p><strong>' + escapeHtml(SUPPORT_EMAIL) + '</strong></p></div><div class="info-card"><h3>Best info to include</h3><p>Your file type, selected mode, and what happened after upload.</p></div></div>'
+);
 
-app.get('/ups-label-to-4x6', function (_req, res) {
-  res.send(renderSimplePage(
-    '/ups-label-to-4x6',
-    'UPS Label to 4x6 | PDF to Thermal',
-    'Convert a UPS shipping label into a 4x6 thermal-printer-ready PDF.',
-    'Convert UPS labels to 4x6',
-    '<p>UPS labels often print more cleanly when the source file is normalized to 4x6 first.</p>'
-  ));
-});
+addSimpleContentRoute('/usps-label-to-4x6', 'USPS Label to 4x6 | PDF to Thermal', 'Convert a USPS shipping label into a 4x6 thermal-printer-ready PDF.', 'Convert USPS labels to 4x6',
+  '<p>Use PDF to Thermal to turn USPS labels into a cleaner 4x6 PDF for thermal printing.</p>'
+);
 
-app.get('/fedex-label-to-4x6', function (_req, res) {
-  res.send(renderSimplePage(
-    '/fedex-label-to-4x6',
-    'FedEx Label to 4x6 | PDF to Thermal',
-    'Convert a FedEx shipping label into a 4x6 thermal-printer-ready PDF.',
-    'Convert FedEx labels to 4x6',
-    '<p>FedEx labels can be easier to print when the final PDF already matches the physical label stock.</p>'
-  ));
-});
+addSimpleContentRoute('/ups-label-to-4x6', 'UPS Label to 4x6 | PDF to Thermal', 'Convert a UPS shipping label into a 4x6 thermal-printer-ready PDF.', 'Convert UPS labels to 4x6',
+  '<p>UPS labels often print more cleanly when the source file is normalized to 4x6 first.</p>'
+);
 
-app.get('/amazon-return-label-to-4x6', function (_req, res) {
-  res.send(renderSimplePage(
-    '/amazon-return-label-to-4x6',
-    'Amazon Return Label to 4x6 | PDF to Thermal',
-    'Convert an Amazon return label into a 4x6 thermal-printer-ready PDF.',
-    'Convert Amazon return labels to 4x6',
-    '<p>Amazon return labels often arrive in awkward formats. PDF to Thermal helps convert them into cleaner 4x6 output.</p>'
-  ));
-});
+addSimpleContentRoute('/fedex-label-to-4x6', 'FedEx Label to 4x6 | PDF to Thermal', 'Convert a FedEx shipping label into a 4x6 thermal-printer-ready PDF.', 'Convert FedEx labels to 4x6',
+  '<p>FedEx labels can be easier to print when the final PDF already matches the physical label stock.</p>'
+);
 
-app.get('/ebay-label-to-4x6', function (_req, res) {
-  res.send(renderSimplePage(
-    '/ebay-label-to-4x6',
-    'eBay Label to 4x6 | PDF to Thermal',
-    'Convert an eBay shipping label into a 4x6 thermal-printer-ready PDF.',
-    'Convert eBay labels to 4x6',
-    '<p>eBay sellers can use PDF to Thermal to create a simpler 4x6 workflow for thermal printers.</p>'
-  ));
-});
+addSimpleContentRoute('/amazon-return-label-to-4x6', 'Amazon Return Label to 4x6 | PDF to Thermal', 'Convert an Amazon return label into a 4x6 thermal-printer-ready PDF.', 'Convert Amazon return labels to 4x6',
+  '<p>Amazon return labels often arrive in awkward formats. PDF to Thermal helps convert them into cleaner 4x6 output.</p>'
+);
 
-app.get('/etsy-label-to-4x6', function (_req, res) {
-  res.send(renderSimplePage(
-    '/etsy-label-to-4x6',
-    'Etsy Label to 4x6 | PDF to Thermal',
-    'Convert an Etsy shipping label into a 4x6 thermal-printer-ready PDF.',
-    'Convert Etsy labels to 4x6',
-    '<p>Etsy labels can be converted into cleaner 4x6 PDFs for easier home-business printing.</p>'
-  ));
-});
+addSimpleContentRoute('/ebay-label-to-4x6', 'eBay Label to 4x6 | PDF to Thermal', 'Convert an eBay shipping label into a 4x6 thermal-printer-ready PDF.', 'Convert eBay labels to 4x6',
+  '<p>eBay sellers can use PDF to Thermal to create a simpler 4x6 workflow for thermal printers.</p>'
+);
+
+addSimpleContentRoute('/etsy-label-to-4x6', 'Etsy Label to 4x6 | PDF to Thermal', 'Convert an Etsy shipping label into a 4x6 thermal-printer-ready PDF.', 'Convert Etsy labels to 4x6',
+  '<p>Etsy labels can be converted into cleaner 4x6 PDFs for easier home-business printing.</p>'
+);
+
+addSimpleContentRoute('/pdf-to-4x6-label', 'PDF to 4x6 Label Converter | PDF to Thermal', 'Convert a PDF shipping label into a 4x6 thermal-printer-ready PDF.', 'Convert PDF labels to 4x6',
+  '<p>If you have a shipping label in PDF form and need it resized for a 4x6 thermal printer, PDF to Thermal is built for that exact job.</p>'
+);
+
+addSimpleContentRoute('/shipping-label-to-4x6', 'Shipping Label to 4x6 | PDF to Thermal', 'Convert a shipping label into a 4x6 thermal-printer-ready PDF.', 'Convert shipping labels to 4x6',
+  '<p>PDF to Thermal is designed to take shipping labels in common formats and convert them into a cleaner 4x6 layout for thermal printers.</p>'
+);
+
+addSimpleContentRoute('/thermal-label-converter', 'Thermal Label Converter | PDF to Thermal', 'Use PDF to Thermal as a thermal label converter for 4x6 printing.', 'Thermal label converter for 4x6 printing',
+  '<p>PDF to Thermal is a focused thermal label converter that reformats labels for common 4x6 thermal printer workflows.</p>'
+);
+
+addSimpleContentRoute('/pdf-to-thermal-printer', 'PDF to Thermal Printer | PDF to Thermal', 'Convert a PDF shipping label for easier use on a thermal printer.', 'Convert a PDF for thermal printer use',
+  '<p>If your PDF label was not created with a 4x6 thermal printer in mind, PDF to Thermal helps reformat it into a more usable output.</p>'
+);
+
+addSimpleContentRoute('/amazon-return-label-to-thermal-printer', 'Amazon Return Label to Thermal Printer | PDF to Thermal', 'Convert an Amazon return label for easier printing on a thermal printer.', 'Convert Amazon return labels for thermal printers',
+  '<p>Amazon return labels do not always arrive in the ideal format for thermal printers. PDF to Thermal helps bridge that gap with a simple 4x6 workflow.</p>'
+);
 
 app.post('/convert', function (req, res, next) {
   upload.single('labelFile')(req, res, function (err) {
@@ -1201,16 +612,7 @@ app.post('/convert', function (req, res, next) {
         title: 'Upload Error | PDF to Thermal',
         description: 'Upload error on PDF to Thermal.',
         canonicalPath: '/',
-        content: [
-          '<div class="card result-card">',
-          '  <div class="status error">Upload error</div>',
-          '  <h1>We could not process that upload</h1>',
-          '  <p>' + escapeHtml(err.message) + '</p>',
-          '  <div class="button-row">',
-          '    <a class="btn" href="/">Back Home</a>',
-          '  </div>',
-          '</div>'
-        ].join('\n')
+        content: '<div class="card result-card"><div class="status error">Upload error</div><h1>We could not process that upload</h1><p>' + escapeHtml(err.message) + '</p><div class="button-row"><a class="btn" href="/">Back Home</a></div></div>'
       }));
     }
     next();
@@ -1221,16 +623,7 @@ app.post('/convert', function (req, res, next) {
       title: 'Upload Error | PDF to Thermal',
       description: 'Upload error on PDF to Thermal.',
       canonicalPath: '/',
-      content: [
-        '<div class="card result-card">',
-        '  <div class="status error">Upload error</div>',
-        '  <h1>No file uploaded</h1>',
-        '  <p>Please go back and choose a PDF, PNG, JPG, or JPEG file before submitting.</p>',
-        '  <div class="button-row">',
-        '    <a class="btn" href="/">Back Home</a>',
-        '  </div>',
-        '</div>'
-      ].join('\n')
+      content: '<div class="card result-card"><div class="status error">Upload error</div><h1>No file uploaded</h1><p>Please go back and choose a PDF, PNG, JPG, or JPEG file before submitting.</p><div class="button-row"><a class="btn" href="/">Back Home</a></div></div>'
     }));
   }
 
@@ -1257,12 +650,9 @@ app.post('/convert', function (req, res, next) {
 
     const modeLabel = mode === 'fill'
       ? 'Crop tighter to fill 4x6'
-      : mode === 'autorotate'
-        ? 'Rotate for best fit'
-        : 'Fit entire label';
+      : (mode === 'autorotate' ? 'Rotate for best fit' : 'Fit entire label');
 
     const pageCount = result && result.pageCount ? result.pageCount : 1;
-
     const pageMessage = pageCount > 1
       ? 'Your file was processed successfully using <strong>' + escapeHtml(modeLabel) + '</strong>. ' + escapeHtml(String(pageCount)) + ' pages were converted into one multi-page 4x6 PDF.'
       : 'Your file was processed successfully using <strong>' + escapeHtml(modeLabel) + '</strong>. Download the converted PDF and print it on a 4x6 thermal label printer.';
@@ -1270,21 +660,9 @@ app.post('/convert', function (req, res, next) {
     const previewUrl = '/downloads/' + encodeURIComponent(outputName) + '#toolbar=0&navpanes=0&scrollbar=1';
     const originalUrl = '/uploads/' + encodeURIComponent(path.basename(inputPath));
     const openUrl = '/downloads/' + encodeURIComponent(outputName);
-
     const croppingWarning = mode === 'fill'
       ? '<div class="warning-box">Fill mode can crop outer edges slightly. Review the preview carefully before printing.</div>'
       : '';
-
-    const reportSubject = encodeURIComponent('PDF to Thermal conversion issue');
-    const reportBody = encodeURIComponent(
-      'Hi,\n\nI want to report a conversion issue.\n\nOriginal file: ' +
-      originalName +
-      '\nSelected mode: ' +
-      modeLabel +
-      '\nPage count: ' +
-      pageCount +
-      '\nWhat happened:\n\n'
-    );
 
     res.send(pageTemplate({
       title: 'Conversion Complete | PDF to Thermal',
@@ -1314,7 +692,6 @@ app.post('/convert', function (req, res, next) {
         croppingWarning,
         '        <div class="button-row">',
         '          <a class="btn secondary" href="' + escapeHtml(originalUrl) + '" target="_blank" rel="noopener">Open Original Upload</a>',
-        '          <a class="btn ghost" href="mailto:' + escapeHtml(SUPPORT_EMAIL) + '?subject=' + reportSubject + '&body=' + reportBody + '">Report Bad Conversion</a>',
         '        </div>',
         '      </div>',
         '    </div>',
@@ -1322,7 +699,7 @@ app.post('/convert', function (req, res, next) {
         '      <h3>Preview your converted label</h3>',
         '      <p>Review the output below before downloading or printing.</p>',
         '      <iframe class="preview-frame" src="' + escapeHtml(previewUrl) + '" title="Converted PDF preview"></iframe>',
-        '      <div class="preview-tip">If your browser does not show the preview, use the “Open PDF in New Tab” or download button above.</div>',
+        '      <div class="preview-tip">If your browser does not show the preview, use the Open PDF in New Tab or download button above.</div>',
         '    </div>',
         '  </div>',
         '</div>'
@@ -1334,16 +711,7 @@ app.post('/convert', function (req, res, next) {
       title: 'Conversion Failed | PDF to Thermal',
       description: 'File conversion failed on PDF to Thermal.',
       canonicalPath: '/',
-      content: [
-        '<div class="card result-card">',
-        '  <div class="status error">Conversion failed</div>',
-        '  <h1>Something went wrong</h1>',
-        '  <p>' + escapeHtml(err.message || 'Unknown error') + '</p>',
-        '  <div class="button-row">',
-        '    <a class="btn" href="/">Try Again</a>',
-        '  </div>',
-        '</div>'
-      ].join('\n')
+      content: '<div class="card result-card"><div class="status error">Conversion failed</div><h1>Something went wrong</h1><p>' + escapeHtml(err.message || 'Unknown error') + '</p><div class="button-row"><a class="btn" href="/">Try Again</a></div></div>'
     }));
   }
 });
@@ -1353,17 +721,7 @@ app.use(function (_req, res) {
     title: 'Page Not Found | PDF to Thermal',
     description: 'The page you requested could not be found.',
     canonicalPath: '/',
-    content: [
-      '<div class="card not-found">',
-      '  <div class="status error">404</div>',
-      '  <h1>Page not found</h1>',
-      '  <p>The page you requested does not exist or may have moved.</p>',
-      '  <div class="button-row">',
-      '    <a class="btn" href="/">Go Home</a>',
-      '    <a class="btn secondary" href="/articles">Browse Articles</a>',
-      '  </div>',
-      '</div>'
-    ].join('\n')
+    content: '<div class="card not-found"><div class="status error">404</div><h1>Page not found</h1><p>The page you requested does not exist or may have moved.</p><div class="button-row"><a class="btn" href="/">Go Home</a><a class="btn secondary" href="/articles">Browse Articles</a></div></div>'
   }));
 });
 
