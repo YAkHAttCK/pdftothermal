@@ -413,7 +413,8 @@ function pageTemplate({
 
       .step-card,
       .info-card,
-      .mini-card {
+      .mini-card,
+      .preview-card {
         background: white;
         border: 1px solid var(--line);
         border-radius: 16px;
@@ -436,7 +437,8 @@ function pageTemplate({
 
       .step-card h3,
       .info-card h3,
-      .mini-card h3 {
+      .mini-card h3,
+      .preview-card h3 {
         margin: 0 0 8px;
         font-size: 19px;
       }
@@ -447,7 +449,8 @@ function pageTemplate({
       .faq-item p,
       .legal p,
       .contact-list p,
-      .landing-copy p {
+      .landing-copy p,
+      .preview-card p {
         margin: 0;
         color: var(--muted);
         line-height: 1.6;
@@ -542,7 +545,7 @@ function pageTemplate({
       }
 
       .result-card {
-        max-width: 760px;
+        max-width: 1120px;
         margin: 44px auto;
         padding: 32px;
       }
@@ -623,6 +626,24 @@ function pageTemplate({
         color: var(--text);
       }
 
+      .preview-shell {
+        margin-top: 24px;
+      }
+
+      .preview-frame {
+        width: 100%;
+        height: 720px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #f8fafc;
+      }
+
+      .preview-tip {
+        margin-top: 12px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
       @media (max-width: 920px) {
         .hero-grid,
         .cards-3,
@@ -644,6 +665,10 @@ function pageTemplate({
         .nav {
           flex-direction: column;
           align-items: flex-start;
+        }
+
+        .preview-frame {
+          height: 520px;
         }
       }
     </style>
@@ -717,6 +742,7 @@ function renderLandingPage({
               <span class="badge">PDF + image support</span>
               <span class="badge">Fit / Fill / Rotate</span>
               <span class="badge">Multi-page PDF support</span>
+              <span class="badge">Preview before download</span>
             </div>
 
             <div class="landing-section-grid">
@@ -817,12 +843,12 @@ app.get('/', (req, res) => {
                 <span>Simple browser-based flow with no account required in this version.</span>
               </div>
               <div class="hero-point">
-                <strong>Supports common formats</strong>
-                <span>Upload PDF, PNG, JPG, or JPEG and get a print-ready PDF back.</span>
-              </div>
-              <div class="hero-point">
                 <strong>Multi-page PDF support</strong>
                 <span>PDF uploads now convert all pages instead of stopping at page one.</span>
+              </div>
+              <div class="hero-point">
+                <strong>Preview before download</strong>
+                <span>Review the converted PDF on screen before you save or print it.</span>
               </div>
             </div>
 
@@ -877,7 +903,7 @@ app.get('/', (req, res) => {
       <section class="section">
         <h2 class="section-title">How it works</h2>
         <p class="section-subtitle">
-          PDF to Thermal is designed to keep the process simple: upload your label, choose a conversion mode, convert it to 4x6, then download the finished PDF.
+          PDF to Thermal is designed to keep the process simple: upload your label, choose a conversion mode, convert it to 4x6, preview the result, then download the finished PDF.
         </p>
         <div class="cards-3">
           <div class="step-card">
@@ -892,8 +918,8 @@ app.get('/', (req, res) => {
           </div>
           <div class="step-card">
             <div class="step-number">3</div>
-            <h3>Download and print</h3>
-            <p>Open the converted file and print it on your 4x6 thermal label printer. PDF uploads keep multiple pages.</p>
+            <h3>Preview and download</h3>
+            <p>Review the converted PDF on screen, then download and print it on your 4x6 thermal label printer.</p>
           </div>
         </div>
       </section>
@@ -923,9 +949,9 @@ app.get('/', (req, res) => {
             </p>
           </div>
           <div class="info-card">
-            <h3>Handles longer PDF jobs better</h3>
+            <h3>Better workflow confidence</h3>
             <p>
-              PDF uploads now carry all pages through the conversion process, which makes the tool more practical for multi-page return files and stacked label PDFs.
+              You can now preview the converted PDF before downloading it, which makes it easier to catch sizing or layout issues before printing.
             </p>
           </div>
         </div>
@@ -934,7 +960,7 @@ app.get('/', (req, res) => {
       <section class="cta">
         <h2>Fix your shipping label in seconds</h2>
         <p>
-          Upload your file, choose the best fit mode, and download a cleaner PDF for your thermal printer.
+          Upload your file, choose the best fit mode, preview the result, and download a cleaner PDF for your thermal printer.
         </p>
         <a class="btn" href="/">Start with a label upload</a>
       </section>
@@ -969,8 +995,8 @@ app.get('/faq', (req, res) => {
               <p>Yes. PDF uploads are converted page by page into a multi-page 4x6 PDF output.</p>
             </div>
             <div class="faq-item">
-              <h3>What does “Fit entire label” do?</h3>
-              <p>It scales the whole label down so everything stays visible within each 4x6 page.</p>
+              <h3>Can I preview the result before downloading?</h3>
+              <p>Yes. The completion page now includes an on-screen PDF preview.</p>
             </div>
             <div class="faq-item">
               <h3>What does “Crop tighter to fill 4x6” do?</h3>
@@ -1449,6 +1475,8 @@ app.post('/convert', (req, res, next) => {
         ? `Your file was processed successfully using <strong>${escapeHtml(modeLabel)}</strong>. ${result.pageCount} pages were converted into one multi-page 4x6 PDF.`
         : `Your file was processed successfully using <strong>${escapeHtml(modeLabel)}</strong>. Download the converted PDF and print it on a 4x6 thermal label printer.`;
 
+    const previewUrl = `/downloads/${encodeURIComponent(outputName)}#toolbar=0&navpanes=0&scrollbar=1`;
+
     res.send(pageTemplate({
       title: 'Conversion Complete | PDF to Thermal',
       description: 'File conversion complete on PDF to Thermal.',
@@ -1461,6 +1489,17 @@ app.post('/convert', (req, res, next) => {
           <div class="button-row">
             <a class="btn" href="/downloads/${escapeHtml(outputName)}" download>Download 4x6 PDF</a>
             <a class="btn secondary" href="/">Convert Another File</a>
+          </div>
+
+          <div class="preview-shell">
+            <div class="preview-card">
+              <h3>Preview your converted label</h3>
+              <p>Review the output below before downloading or printing.</p>
+              <iframe class="preview-frame" src="${escapeHtml(previewUrl)}" title="Converted PDF preview"></iframe>
+              <div class="preview-tip">
+                If your browser does not show the preview, use the download button above to open the PDF directly.
+              </div>
+            </div>
           </div>
         </div>
       `
