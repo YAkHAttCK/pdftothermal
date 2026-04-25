@@ -8,7 +8,7 @@ const { PDFDocument, degrees } = require('pdf-lib');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SITE_URL = 'https://pdftothermal.com';
-const GA_ID = 'G-XCBKTHSF8B';
+const GA_ID = 'G-CV6R7PF4PH';
 
 app.use(express.urlencoded({ extended: true }));
 
