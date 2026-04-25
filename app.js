@@ -309,6 +309,15 @@ function pageTemplate(opts) {
   ].join('\n');
 }
 
+function renderSimplePage(pathName, title, description, heading, bodyHtml) {
+  return pageTemplate({
+    title: title,
+    description: description,
+    canonicalPath: pathName,
+    content: '<section class="section"><div class="card" style="padding: 28px;"><h1>' + escapeHtml(heading) + '</h1>' + bodyHtml + '</div></section>'
+  });
+}
+
 function bytesToReadable(bytes) {
   if (!bytes) return 'Unknown size';
   const units = ['B', 'KB', 'MB', 'GB'];
@@ -319,6 +328,194 @@ function bytesToReadable(bytes) {
     unitIndex += 1;
   }
   return (value >= 10 || unitIndex === 0 ? value.toFixed(0) : value.toFixed(1)) + ' ' + units[unitIndex];
+}
+
+const articleTitles = [
+  ['best-thermal-printer-for-ebay-sellers', 'Best Thermal Printer for eBay Sellers', 'What eBay sellers should look for in a thermal printer and how to avoid common label-printing headaches.', 'Buyer Guide'],
+  ['best-thermal-printer-for-etsy-sellers', 'Best Thermal Printer for Etsy Sellers', 'A practical guide to choosing a thermal printer for Etsy shipping and home-business workflows.', 'Buyer Guide'],
+  ['how-to-print-amazon-return-labels-on-4x6', 'How to Print Amazon Return Labels on 4x6', 'How to handle Amazon return labels that do not arrive in a clean 4x6 format.', 'How-To'],
+  ['rollo-vs-munbyn', 'Rollo vs Munbyn for Shipping Labels', 'A simple comparison of two popular thermal-printer brands for 4x6 label printing.', 'Comparison'],
+  ['pdf-shipping-label-wont-print-on-thermal-printer', 'PDF Shipping Label Won’t Print on a Thermal Printer', 'The most common reasons a PDF label prints badly on a thermal printer and how to fix it.', 'Troubleshooting'],
+  ['best-4x6-thermal-labels-for-shipping', 'Best 4x6 Thermal Labels for Shipping', 'What to look for when buying 4x6 thermal labels for shipping workflows.', 'Buyer Guide'],
+  ['best-shipping-scale-for-small-business', 'Best Shipping Scale for a Small Business', 'Why a simple shipping scale matters in a small e-commerce workflow.', 'Buyer Guide'],
+  ['how-to-print-usps-labels-on-4x6', 'How to Print USPS Labels on 4x6', 'A practical workflow for getting USPS labels onto a 4x6 thermal label.', 'How-To'],
+  ['how-to-print-ups-labels-on-4x6', 'How to Print UPS Labels on 4x6', 'How to handle UPS labels that need a better 4x6 printing workflow.', 'How-To'],
+  ['how-to-print-fedex-labels-on-4x6', 'How to Print FedEx Labels on 4x6', 'How to get FedEx shipping labels printing cleanly on 4x6 stock.', 'How-To'],
+  ['how-to-convert-pdf-label-to-4x6', 'How to Convert a PDF Label to 4x6', 'Why converting a PDF label to 4x6 often solves thermal-printing problems.', 'How-To'],
+  ['thermal-printer-vs-inkjet-for-shipping-labels', 'Thermal Printer vs Inkjet for Shipping Labels', 'A simple comparison of thermal and inkjet printing for shipping labels.', 'Comparison'],
+  ['common-thermal-label-printing-mistakes', 'Common Thermal Label Printing Mistakes', 'The most common mistakes people make when printing thermal shipping labels.', 'Troubleshooting'],
+  ['why-your-label-prints-too-small', 'Why Your Label Prints Too Small', 'Why a shipping label can look tiny on a 4x6 label and what to do about it.', 'Troubleshooting'],
+  ['why-your-label-is-sideways', 'Why Your Label Is Printing Sideways', 'What causes sideways labels and when auto-rotate can help.', 'Troubleshooting'],
+  ['how-to-fix-cropped-shipping-labels', 'How to Fix Cropped Shipping Labels', 'What causes cropped shipping labels and when to switch away from fill-style scaling.', 'Troubleshooting'],
+  ['how-to-print-multi-page-label-pdfs', 'How to Print Multi-Page Label PDFs', 'How to handle label PDFs that contain more than one page.', 'How-To'],
+  ['best-label-printers-for-amazon-sellers', 'Best Label Printers for Amazon Sellers', 'What Amazon sellers should prioritize when picking a shipping-label printer.', 'Buyer Guide'],
+  ['best-label-printers-for-home-business', 'Best Label Printers for a Home Business', 'How home businesses should think about label-printer selection.', 'Buyer Guide'],
+  ['free-tools-to-convert-labels-to-4x6', 'Free Tools to Convert Labels to 4x6', 'What to look for in a free 4x6 label converter.', 'Tools'],
+  ['how-to-choose-thermal-printer-label-size', 'How to Choose a Thermal Printer Label Size', 'Why label size matters and why 4x6 is so common for shipping.', 'How-To'],
+  ['direct-thermal-vs-thermal-transfer-labels', 'Direct Thermal vs Thermal Transfer Labels', 'A simple explanation of direct thermal and thermal transfer label types.', 'Explainer'],
+  ['thermal-printer-setup-checklist', 'Thermal Printer Setup Checklist', 'A simple setup checklist for getting a thermal label printer ready for shipping work.', 'Checklist'],
+  ['how-to-test-barcode-readability-before-shipping', 'How to Test Barcode Readability Before Shipping', 'A simple way to reduce the chance of sending out a bad shipping label.', 'How-To'],
+  ['best-thermal-printer-for-shopify-sellers', 'Best Thermal Printer for Shopify Sellers', 'What Shopify sellers should prioritize in a 4x6 thermal printer setup.', 'Buyer Guide'],
+  ['how-to-print-mercari-labels-on-4x6', 'How to Print Mercari Labels on 4x6', 'A simple workflow for getting Mercari shipping labels ready for thermal printers.', 'How-To'],
+  ['how-to-print-poshmark-labels-on-4x6', 'How to Print Poshmark Labels on 4x6', 'How Poshmark sellers can make 4x6 thermal printing easier.', 'How-To'],
+  ['small-shipping-station-setup-for-home-sellers', 'Small Shipping Station Setup for Home Sellers', 'How to keep a home shipping station simple, compact, and efficient.', 'Workflow'],
+  ['how-to-save-time-printing-shipping-labels', 'How to Save Time Printing Shipping Labels', 'Simple ways to reduce friction when printing a lot of shipping labels.', 'Workflow']
+];
+
+const allArticles = articleTitles.map(function (item) {
+  return {
+    slug: item[0],
+    title: item[1],
+    description: item[2],
+    category: item[3],
+    readTime: '4 min read',
+    intro: item[2],
+    sections: [
+      {
+        heading: 'Why it matters',
+        paragraphs: [
+          'A clean shipping workflow saves time and reduces waste.',
+          'When files, printers, and labels agree with each other, everything becomes easier.'
+        ]
+      },
+      {
+        heading: 'What to focus on',
+        paragraphs: [
+          'Focus on repeatability instead of one lucky successful print.',
+          'The goal is a workflow you can trust every day.'
+        ]
+      },
+      {
+        heading: 'Where PDF to Thermal fits',
+        paragraphs: [
+          'Many problems start with awkward source files.',
+          'A 4x6 conversion step often removes that friction before printing.'
+        ]
+      }
+    ]
+  };
+});
+
+function articlePageHtml(article) {
+  return pageTemplate({
+    title: article.title + ' | PDF to Thermal',
+    description: article.description,
+    canonicalPath: '/articles/' + article.slug,
+    content: [
+      '<section class="section">',
+      '  <div class="card" style="padding:28px;">',
+      '    <div class="badge-row">',
+      '      <span class="badge">' + escapeHtml(article.category) + '</span>',
+      '      <span class="badge">' + escapeHtml(article.readTime) + '</span>',
+      '    </div>',
+      '    <h1 style="margin-top:14px;">' + escapeHtml(article.title) + '</h1>',
+      '    <p class="lead">' + escapeHtml(article.intro) + '</p>',
+      '  </div>',
+      '</section>',
+      '<section class="section">',
+      '  <div class="cards-3">',
+      article.sections.map(function (section) {
+        return '<div class="info-card"><h3>' + escapeHtml(section.heading) + '</h3>' + section.paragraphs.map(function (p) {
+          return '<p style="margin-bottom:12px;">' + escapeHtml(p) + '</p>';
+        }).join('') + '</div>';
+      }).join('\n'),
+      '  </div>',
+      '</section>',
+      '<section class="cta">',
+      '  <h2>Need a cleaner 4x6 label workflow?</h2>',
+      '  <p>When awkward file layouts are the real problem, a clean 4x6 conversion step usually saves more time than fighting printer settings over and over.</p>',
+      '  <a class="btn" href="/">Use PDF to Thermal</a>',
+      '</section>'
+    ].join('\n')
+  });
+}
+
+async function imageToPdf(inputPath, outputPath, mode) {
+  const metadata = await sharp(inputPath).metadata();
+  const pagePortrait = { width: 1200, height: 1800 };
+  let pipeline = sharp(inputPath);
+
+  if (mode === 'autorotate' && metadata.width && metadata.height && metadata.width > metadata.height) {
+    pipeline = pipeline.rotate(90);
+  }
+
+  const fitMode = mode === 'fill' ? 'cover' : 'contain';
+
+  const imageBuffer = await pipeline
+    .resize(pagePortrait.width, pagePortrait.height, {
+      fit: fitMode,
+      position: 'center',
+      background: { r: 255, g: 255, b: 255, alpha: 1 }
+    })
+    .png()
+    .toBuffer();
+
+  const pdfDoc = await PDFDocument.create();
+  const page = pdfDoc.addPage([288, 432]);
+  const embedded = await pdfDoc.embedPng(imageBuffer);
+
+  page.drawImage(embedded, {
+    x: 0,
+    y: 0,
+    width: 288,
+    height: 432
+  });
+
+  const pdfBytes = await pdfDoc.save();
+  fs.writeFileSync(outputPath, pdfBytes);
+
+  return { pageCount: 1 };
+}
+
+async function pdfTo4x6(inputPath, outputPath, mode) {
+  const existingPdfBytes = fs.readFileSync(inputPath);
+  const existingPdf = await PDFDocument.load(existingPdfBytes);
+  const newPdf = await PDFDocument.create();
+
+  const pageIndices = existingPdf.getPageIndices();
+  const copiedPages = await newPdf.copyPages(existingPdf, pageIndices);
+
+  copiedPages.forEach(function (copiedPage) {
+    const sourceWidth = copiedPage.getWidth();
+    const sourceHeight = copiedPage.getHeight();
+    const targetWidth = 288;
+    const targetHeight = 432;
+    const page = newPdf.addPage([targetWidth, targetHeight]);
+
+    const shouldRotate = mode === 'autorotate' && sourceWidth > sourceHeight;
+    const effectiveWidth = shouldRotate ? sourceHeight : sourceWidth;
+    const effectiveHeight = shouldRotate ? sourceWidth : sourceHeight;
+
+    const scale = mode === 'fill'
+      ? Math.max(targetWidth / effectiveWidth, targetHeight / effectiveHeight)
+      : Math.min(targetWidth / effectiveWidth, targetHeight / effectiveHeight);
+
+    const drawnWidth = effectiveWidth * scale;
+    const drawnHeight = effectiveHeight * scale;
+    const x = (targetWidth - drawnWidth) / 2;
+    const y = (targetHeight - drawnHeight) / 2;
+
+    if (shouldRotate) {
+      page.drawPage(copiedPage, {
+        x: targetWidth - x,
+        y: y,
+        xScale: scale,
+        yScale: scale,
+        rotate: degrees(90)
+      });
+    } else {
+      page.drawPage(copiedPage, {
+        x: x,
+        y: y,
+        xScale: scale,
+        yScale: scale
+      });
+    }
+  });
+
+  const pdfBytes = await newPdf.save();
+  fs.writeFileSync(outputPath, pdfBytes);
+  return { pageCount: copiedPages.length };
 }
 
 app.get('/healthz', function (_req, res) {
@@ -381,147 +578,6 @@ app.get('/favicon.svg', function (_req, res) {
   ].join('\n'));
 });
 
-app.get('/', function (_req, res) {
-  res.send(pageTemplate({
-    title: 'PDF to Thermal | Convert Shipping Labels to 4x6 Thermal Format',
-    description: 'Upload a PDF, JPG, or PNG shipping label and convert it into a 4x6 thermal-printer-ready PDF.',
-    canonicalPath: '/',
-    content: [
-      '<section class="hero">',
-      '  <div class="hero-grid">',
-      '    <div class="hero-card hero-copy">',
-      '      <div class="eyebrow">4x6 label conversion made simple</div>',
-      '      <h1>Convert shipping labels to 4x6 thermal format</h1>',
-      '      <p class="lead">Upload a PDF, JPG, or PNG label and turn it into a cleaner thermal-printer-ready PDF with preview before download.</p>',
-      '      <div class="hero-points">',
-      '        <div class="hero-point"><strong>Built for shipping labels</strong><span>Made for 4x6 thermal printing instead of generic file conversion.</span></div>',
-      '        <div class="hero-point"><strong>Fast upload and review</strong><span>Simple browser-based flow with no account required.</span></div>',
-      '        <div class="hero-point"><strong>Multi-page PDF support</strong><span>PDF uploads convert all pages instead of stopping at page one.</span></div>',
-      '        <div class="hero-point"><strong>Preview before download</strong><span>Review the converted PDF on screen before you save or print it.</span></div>',
-      '      </div>',
-      '      <div class="trust-line">Works best for common shipping workflows where you need a simple 4x6 output for a thermal label printer.</div>',
-      '    </div>',
-      '    <div class="hero-card upload-card">',
-      '      <h2>Upload your label</h2>',
-      '      <p>Choose a conversion mode based on whether you want to preserve the full label, fill the page more tightly, or auto-rotate a wide label.</p>',
-      '      <form action="/convert" method="POST" enctype="multipart/form-data" class="upload-box" id="uploadForm">',
-      '        <div class="dropzone" id="dropzone">',
-      '          <label class="main-label" for="labelFile">Select a file or drag it here</label>',
-      '          <input id="labelFile" type="file" name="labelFile" accept=".pdf,.png,.jpg,.jpeg" required />',
-      '          <div id="selectedFile" class="selected-file"></div>',
-      '        </div>',
-      '        <div class="mode-box">',
-      '          <span class="mode-box-title">Conversion mode</span>',
-      '          <label class="mode-option">',
-      '            <input type="radio" name="mode" value="fit" checked />',
-      '            Fit entire label',
-      '            <small>Keeps the full label visible and scales it to fit inside each 4x6 page.</small>',
-      '          </label>',
-      '          <label class="mode-option">',
-      '            <input type="radio" name="mode" value="fill" />',
-      '            Crop tighter to fill 4x6',
-      '            <small>Fills more of the page and may crop some outer edges.</small>',
-      '          </label>',
-      '          <label class="mode-option">',
-      '            <input type="radio" name="mode" value="autorotate" />',
-      '            Rotate for best fit',
-      '            <small>Automatically rotates wide labels when that should fit better on 4x6.</small>',
-      '          </label>',
-      '        </div>',
-      '        <button type="submit">Upload and Convert</button>',
-      '        <div class="microcopy">',
-      '          Supported file types: PDF, PNG, JPG, JPEG.<br />',
-      '          Max upload size: 15 MB.<br />',
-      '          PDF uploads convert all pages into a multi-page 4x6 PDF.',
-      '        </div>',
-      '      </form>',
-      '    </div>',
-      '  </div>',
-      '</section>',
-      '<section class="section">',
-      '  <h2 class="section-title">How it works</h2>',
-      '  <p class="section-subtitle">Upload your label, choose a conversion mode, preview the result, then download the finished PDF.</p>',
-      '  <div class="cards-3">',
-      '    <div class="step-card"><div class="step-number">1</div><h3>Upload your file</h3><p>Use a PDF, JPG, PNG, or JPEG shipping label from your computer or phone.</p></div>',
-      '    <div class="step-card"><div class="step-number">2</div><h3>Choose your mode</h3><p>Select fit, fill, or auto-rotate depending on how you want the label placed on the page.</p></div>',
-      '    <div class="step-card"><div class="step-number">3</div><h3>Preview and download</h3><p>Review the converted PDF, then download and print it on your 4x6 thermal label printer.</p></div>',
-      '  </div>',
-      '</section>',
-      '<section class="section">',
-      '  <h2 class="section-title">Built for common label problems</h2>',
-      '  <p class="section-subtitle">Many labels arrive in awkward PDFs or image formats that do not line up well with a thermal printer.</p>',
-      '  <div class="cards-3">',
-      '    <div class="info-card"><h3>USPS</h3><p>Convert common USPS labels into cleaner 4x6 output.</p></div>',
-      '    <div class="info-card"><h3>UPS</h3><p>Handle page-size mismatches before you print.</p></div>',
-      '    <div class="info-card"><h3>FedEx</h3><p>Normalize label layouts for thermal printers.</p></div>',
-      '  </div>',
-      '</section>',
-      '<section class="section">',
-      '  <h2 class="section-title">Read before you print</h2>',
-      '  <div class="article-grid">',
-      allArticles.slice(0, 6).map(function (article) {
-        return '<article class="article-card"><div class="article-card-meta"><span class="badge">' + escapeHtml(article.category) + '</span><span class="badge">' + escapeHtml(article.readTime) + '</span></div><h3>' + escapeHtml(article.title) + '</h3><p>' + escapeHtml(article.description) + '</p><div class="button-row"><a class="btn secondary" href="/articles/' + escapeHtml(article.slug) + '">Read Article</a></div></article>';
-      }).join(''),
-      '  </div>',
-      '</section>',
-      '<section class="cta">',
-      '  <h2>Fix your shipping label in seconds</h2>',
-      '  <p>Upload your file, choose the best fit mode, preview the result, and download a cleaner PDF for your thermal printer.</p>',
-      '  <a class="btn" href="#uploadForm">Start with a label upload</a>',
-      '</section>'
-    ].join('\n'),
-    bottomScript: [
-      '<script>',
-      '(function () {',
-      '  const fileInput = document.getElementById("labelFile");',
-      '  const selectedFile = document.getElementById("selectedFile");',
-      '  const dropzone = document.getElementById("dropzone");',
-      '  if (!fileInput || !selectedFile || !dropzone) return;',
-      '  function bytesToReadableClient(bytes) {',
-      '    if (!bytes) return "Unknown size";',
-      '    const units = ["B", "KB", "MB", "GB"];',
-      '    let value = bytes;',
-      '    let unitIndex = 0;',
-      '    while (value >= 1024 && unitIndex < units.length - 1) { value /= 1024; unitIndex += 1; }',
-      '    return (value >= 10 || unitIndex === 0 ? value.toFixed(0) : value.toFixed(1)) + " " + units[unitIndex];',
-      '  }',
-      '  function setFileDisplay(file) {',
-      '    if (!file) { selectedFile.style.display = "none"; selectedFile.innerHTML = ""; return; }',
-      '    selectedFile.style.display = "block";',
-      '    selectedFile.innerHTML = "<strong>Selected file:</strong> " + file.name.replace(/</g, "&lt;").replace(/>/g, "&gt;") + "<small>" + bytesToReadableClient(file.size) + "</small>";',
-      '  }',
-      '  fileInput.addEventListener("change", function () {',
-      '    const file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;',
-      '    setFileDisplay(file);',
-      '  });',
-      '  ["dragenter", "dragover"].forEach(function (eventName) {',
-      '    dropzone.addEventListener(eventName, function (e) { e.preventDefault(); e.stopPropagation(); dropzone.classList.add("dragover"); });',
-      '  });',
-      '  ["dragleave", "drop"].forEach(function (eventName) {',
-      '    dropzone.addEventListener(eventName, function (e) { e.preventDefault(); e.stopPropagation(); dropzone.classList.remove("dragover"); });',
-      '  });',
-      '  dropzone.addEventListener("drop", function (e) {',
-      '    const files = e.dataTransfer && e.dataTransfer.files ? e.dataTransfer.files : null;',
-      '    if (!files || !files.length) return;',
-      '    fileInput.files = files;',
-      '    setFileDisplay(files[0]);',
-      '  });',
-      '})();',
-      '</script>'
-    ].join('\n')
-  }));
-});
-
-app.get('/about', function (_req, res) {
-  res.send(renderSimplePage(
-    '/about',
-    'About | PDF to Thermal',
-    'Learn what PDF to Thermal is built for and who it helps.',
-    'About PDF to Thermal',
-    '<p>PDF to Thermal is a focused 4x6 label conversion tool. It exists to solve one recurring problem: shipping labels often arrive in formats that are annoying to print on thermal label stock.</p><p>Instead of acting like a giant all-purpose file converter, PDF to Thermal is designed around shipping, returns, and seller workflows where clean 4x6 output matters.</p><div class="cards-2" style="margin-top:18px;"><div class="info-card"><h3>Who it helps</h3><p>Marketplace sellers, home businesses, return-heavy workflows, and anyone who wants a cleaner 4x6 print path for PDF or image labels.</p></div><div class="info-card"><h3>What it focuses on</h3><p>Fast upload, simple conversion modes, multi-page PDF support, preview before download, and fewer layout headaches before printing.</p></div></div>'
-  ));
-});
-
 app.get('/articles', function (_req, res) {
   res.send(pageTemplate({
     title: 'Articles | PDF to Thermal',
@@ -559,6 +615,10 @@ addSimpleContentRoute('/terms', 'Terms | PDF to Thermal', 'Terms of use for PDF 
 
 addSimpleContentRoute('/contact', 'Contact | PDF to Thermal', 'Contact PDF to Thermal.', 'Contact',
   '<div class="cards-2"><div class="info-card"><h3>Email</h3><p><strong>' + escapeHtml(SUPPORT_EMAIL) + '</strong></p></div><div class="info-card"><h3>Best info to include</h3><p>Your file type, selected mode, and what happened after upload.</p></div></div>'
+);
+
+addSimpleContentRoute('/about', 'About | PDF to Thermal', 'Learn what PDF to Thermal is built for and who it helps.', 'About PDF to Thermal',
+  '<p>PDF to Thermal is a focused 4x6 label conversion tool. It exists to solve one recurring problem: shipping labels often arrive in formats that are annoying to print on thermal label stock.</p><p>Instead of acting like a giant all-purpose file converter, PDF to Thermal is designed around shipping, returns, and seller workflows where clean 4x6 output matters.</p><div class="cards-2" style="margin-top:18px;"><div class="info-card"><h3>Who it helps</h3><p>Marketplace sellers, home businesses, return-heavy workflows, and anyone who wants a cleaner 4x6 print path for PDF or image labels.</p></div><div class="info-card"><h3>What it focuses on</h3><p>Fast upload, simple conversion modes, multi-page PDF support, preview before download, and fewer layout headaches before printing.</p></div></div>'
 );
 
 addSimpleContentRoute('/usps-label-to-4x6', 'USPS Label to 4x6 | PDF to Thermal', 'Convert a USPS shipping label into a 4x6 thermal-printer-ready PDF.', 'Convert USPS labels to 4x6',
@@ -684,7 +744,7 @@ app.post('/convert', function (req, res, next) {
         '        <h3>Conversion details</h3>',
         '        <div class="meta-list">',
         '          <div class="meta-row"><div class="meta-key">Original file</div><div class="meta-value">' + escapeHtml(originalName) + '</div></div>',
-        '          <div class="meta-row"><div class="meta-key">File type</div><div class="meta-value">' + escapeHtml(ext.replace('.', '').toUpperCase()) + '</div></div>',
+        '          <div class="meta-row"><div class="meta-key">File type</div><div class="meta-value">' + escapeHtml(ext.replace(".", "").toUpperCase()) + '</div></div>',
         '          <div class="meta-row"><div class="meta-key">Mode used</div><div class="meta-value">' + escapeHtml(modeLabel) + '</div></div>',
         '          <div class="meta-row"><div class="meta-key">Pages converted</div><div class="meta-value">' + escapeHtml(String(pageCount)) + '</div></div>',
         '          <div class="meta-row"><div class="meta-key">Output</div><div class="meta-value">4x6 PDF</div></div>',
