@@ -8,6 +8,7 @@ const { PDFDocument, degrees } = require('pdf-lib');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SITE_URL = 'https://pdftothermal.com';
+const GA_ID = 'G-XCBKTHSF8B';
 
 app.use(express.urlencoded({ extended: true }));
 
@@ -107,6 +108,15 @@ function pageTemplate({
     <meta property="og:url" content="${escapeHtml(canonicalUrl)}" />
     <meta property="og:site_name" content="PDF to Thermal" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_ID}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '${GA_ID}');
+    </script>
+
     <style>
       :root {
         --bg: #f4f7fb;
@@ -1157,7 +1167,6 @@ app.get('/etsy-label-to-4x6', (req, res) => {
 async function imageToPdf(inputPath, outputPath, mode = 'fit') {
   const metadata = await sharp(inputPath).metadata();
   const pagePortrait = { width: 1200, height: 1800 };
-  const pageLandscape = { width: 1800, height: 1200 };
 
   let pipeline = sharp(inputPath);
 
@@ -1166,12 +1175,9 @@ async function imageToPdf(inputPath, outputPath, mode = 'fit') {
   }
 
   const fitMode = mode === 'fill' ? 'cover' : 'contain';
-  const target = mode === 'autorotate' && metadata.width && metadata.height && metadata.width > metadata.height
-    ? pagePortrait
-    : pagePortrait;
 
   const imageBuffer = await pipeline
-    .resize(target.width, target.height, {
+    .resize(pagePortrait.width, pagePortrait.height, {
       fit: fitMode,
       position: 'center',
       background: { r: 255, g: 255, b: 255, alpha: 1 }
