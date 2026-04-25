@@ -1879,5 +1879,5 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(\`PDF to Thermal running on port \${PORT}\`);
+  console.log(`PDF to Thermal running on port ${PORT}`);
 });
