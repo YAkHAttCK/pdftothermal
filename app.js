@@ -122,17 +122,13 @@ function pageTemplate({
     <style>
       :root {
         --bg: #0b1020;
-        --bg-soft: #10172d;
         --panel: rgba(255,255,255,0.92);
-        --panel-2: rgba(255,255,255,0.72);
         --text: #0f172a;
         --text-soft: #475569;
         --line: rgba(148,163,184,0.25);
-        --line-strong: rgba(99,102,241,0.22);
         --primary: #2563eb;
-        --primary-dark: #1d4ed8;
-        --primary-soft: #dbeafe;
         --accent: #7c3aed;
+        --primary-soft: #dbeafe;
         --accent-soft: #ede9fe;
         --success: #166534;
         --error: #b91c1c;
@@ -142,7 +138,6 @@ function pageTemplate({
         --shadow-md: 0 12px 34px rgba(15, 23, 42, 0.10);
         --radius-xl: 24px;
         --radius-lg: 18px;
-        --radius-md: 14px;
       }
 
       * { box-sizing: border-box; }
@@ -160,18 +155,10 @@ function pageTemplate({
         min-height: 100vh;
       }
 
-      a {
-        color: var(--primary);
-        text-decoration: none;
-      }
-
+      a { color: var(--primary); text-decoration: none; }
       a:hover { text-decoration: underline; }
 
-      .shell {
-        position: relative;
-        overflow: hidden;
-      }
-
+      .shell { position: relative; overflow: hidden; }
       .shell::before {
         content: "";
         position: fixed;
@@ -227,10 +214,7 @@ function pageTemplate({
         line-height: 1.05;
       }
 
-      .brand-text span:first-child {
-        font-size: 16px;
-      }
-
+      .brand-text span:first-child { font-size: 16px; }
       .brand-text span:last-child {
         font-size: 11px;
         color: var(--text-soft);
@@ -269,8 +253,7 @@ function pageTemplate({
         align-items: stretch;
       }
 
-      .hero-card,
-      .card {
+      .hero-card, .card {
         background: var(--panel);
         backdrop-filter: blur(14px);
         border: 1px solid rgba(255,255,255,0.85);
@@ -278,12 +261,7 @@ function pageTemplate({
         box-shadow: var(--shadow-lg);
       }
 
-      .hero-copy {
-        padding: 36px;
-        position: relative;
-        overflow: hidden;
-      }
-
+      .hero-copy { padding: 36px; position: relative; overflow: hidden; }
       .hero-copy::after {
         content: "";
         position: absolute;
@@ -317,9 +295,7 @@ function pageTemplate({
         letter-spacing: -0.04em;
       }
 
-      h2, h3 {
-        letter-spacing: -0.03em;
-      }
+      h2, h3 { letter-spacing: -0.03em; }
 
       .lead {
         margin: 0 0 22px;
@@ -361,20 +337,9 @@ function pageTemplate({
         line-height: 1.6;
       }
 
-      .upload-card {
-        padding: 24px;
-      }
-
-      .upload-card h2 {
-        margin: 0 0 10px;
-        font-size: 27px;
-      }
-
-      .upload-card p {
-        margin: 0 0 18px;
-        color: var(--text-soft);
-        line-height: 1.6;
-      }
+      .upload-card { padding: 24px; }
+      .upload-card h2 { margin: 0 0 10px; font-size: 27px; }
+      .upload-card p { margin: 0 0 18px; color: var(--text-soft); line-height: 1.6; }
 
       .upload-box {
         border: 2px dashed rgba(37,99,235,0.28);
@@ -413,13 +378,11 @@ function pageTemplate({
         cursor: pointer;
         text-decoration: none;
         box-shadow: 0 14px 28px rgba(59,130,246,0.20);
-        transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
       }
 
       button:hover, .btn:hover {
         text-decoration: none;
         transform: translateY(-1px);
-        box-shadow: 0 16px 32px rgba(59,130,246,0.24);
       }
 
       .btn.secondary {
@@ -464,9 +427,7 @@ function pageTemplate({
         font-size: 14px;
       }
 
-      .mode-option:last-child {
-        margin-bottom: 0;
-      }
+      .mode-option:last-child { margin-bottom: 0; }
 
       .mode-option small {
         display: block;
@@ -476,15 +437,8 @@ function pageTemplate({
         line-height: 1.45;
       }
 
-      .section {
-        padding: 20px 0;
-      }
-
-      .section-title {
-        margin: 0 0 16px;
-        font-size: 31px;
-      }
-
+      .section { padding: 20px 0; }
+      .section-title { margin: 0 0 16px; font-size: 31px; }
       .section-subtitle {
         margin: 0 0 24px;
         color: var(--text-soft);
@@ -492,17 +446,18 @@ function pageTemplate({
         max-width: 760px;
       }
 
-      .cards-3 {
+      .cards-3, .cards-2, .use-grid, .landing-section-grid, .result-grid {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 18px;
       }
 
-      .step-card,
-      .info-card,
-      .mini-card,
-      .preview-card,
-      .result-summary {
+      .cards-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .cards-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .use-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .landing-section-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 14px; }
+      .result-grid { grid-template-columns: 360px 1fr; margin-top: 24px; }
+
+      .step-card, .info-card, .mini-card, .preview-card, .result-summary {
         background: rgba(255,255,255,0.95);
         border: 1px solid rgba(255,255,255,0.85);
         border-radius: 18px;
@@ -523,49 +478,26 @@ function pageTemplate({
         margin-bottom: 12px;
       }
 
-      .step-card h3,
-      .info-card h3,
-      .mini-card h3,
-      .preview-card h3,
-      .result-summary h3 {
+      .step-card h3, .info-card h3, .mini-card h3, .preview-card h3, .result-summary h3, .faq-item h3 {
         margin: 0 0 8px;
         font-size: 19px;
       }
 
-      .step-card p,
-      .info-card p,
-      .mini-card p,
-      .faq-item p,
-      .legal p,
-      .contact-list p,
-      .landing-copy p,
-      .preview-card p,
-      .result-summary p {
+      .step-card p, .info-card p, .mini-card p, .faq-item p, .legal p, .contact-list p, .landing-copy p, .preview-card p, .result-summary p, .result-card p {
         margin: 0;
         color: var(--text-soft);
         line-height: 1.65;
       }
 
-      .cards-2 {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 18px;
-      }
-
-      .use-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 14px;
-      }
-
-      .use-item {
+      .use-item, .faq-item {
         background: rgba(255,255,255,0.94);
         border: 1px solid rgba(255,255,255,0.82);
         border-radius: 16px;
         padding: 16px;
-        font-weight: 800;
         box-shadow: var(--shadow-md);
       }
+
+      .use-item { font-weight: 800; }
 
       .warning-box {
         margin-top: 18px;
@@ -580,20 +512,14 @@ function pageTemplate({
 
       .cta {
         margin: 20px 0 34px;
-        background:
-          radial-gradient(circle at top right, rgba(255,255,255,0.16), transparent 26%),
-          linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #4f46e5 100%);
+        background: radial-gradient(circle at top right, rgba(255,255,255,0.16), transparent 26%), linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #4f46e5 100%);
         color: white;
         border-radius: 24px;
         padding: 32px;
         box-shadow: var(--shadow-lg);
       }
 
-      .cta h2 {
-        margin: 0 0 10px;
-        font-size: 31px;
-      }
-
+      .cta h2 { margin: 0 0 10px; font-size: 31px; }
       .cta p {
         margin: 0 0 18px;
         color: rgba(255,255,255,0.84);
@@ -607,22 +533,9 @@ function pageTemplate({
         box-shadow: none;
       }
 
-      .faq-grid {
+      .faq-grid, .legal, .contact-list, .landing-copy, .meta-list, .result-meta, .preview-shell, .tips-list {
         display: grid;
-        gap: 14px;
-      }
-
-      .faq-item {
-        background: rgba(255,255,255,0.94);
-        border: 1px solid rgba(255,255,255,0.82);
-        border-radius: 16px;
-        padding: 18px;
-        box-shadow: var(--shadow-md);
-      }
-
-      .faq-item h3 {
-        margin: 0 0 8px;
-        font-size: 18px;
+        gap: 16px;
       }
 
       .footer {
@@ -666,41 +579,19 @@ function pageTemplate({
         border: 1px solid #fecaca;
       }
 
-      .result-card h1,
-      .landing-copy h1 {
+      .result-card h1, .landing-copy h1 {
         font-size: 38px;
         margin-bottom: 12px;
       }
 
-      .result-card p {
-        color: var(--text-soft);
-        line-height: 1.65;
-      }
-
-      .button-row {
+      .button-row, .badge-row {
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
-        margin-top: 22px;
       }
 
-      .legal, .contact-list, .landing-copy {
-        display: grid;
-        gap: 16px;
-      }
-
-      .landing-section-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 18px;
-        margin-top: 14px;
-      }
-
-      .badge-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-      }
+      .button-row { margin-top: 22px; }
+      .badge-row { gap: 10px; }
 
       .badge {
         display: inline-flex;
@@ -712,24 +603,6 @@ function pageTemplate({
         font-size: 13px;
         font-weight: 800;
         color: var(--text);
-      }
-
-      .result-grid {
-        display: grid;
-        grid-template-columns: 360px 1fr;
-        gap: 20px;
-        margin-top: 24px;
-      }
-
-      .result-meta {
-        display: grid;
-        gap: 18px;
-        align-content: start;
-      }
-
-      .meta-list {
-        display: grid;
-        gap: 10px;
       }
 
       .meta-row {
@@ -760,11 +633,6 @@ function pageTemplate({
         word-break: break-word;
       }
 
-      .preview-shell {
-        display: grid;
-        gap: 18px;
-      }
-
       .preview-frame {
         width: 100%;
         height: 760px;
@@ -779,46 +647,24 @@ function pageTemplate({
         color: var(--text-soft);
       }
 
-      .tips-list {
-        display: grid;
-        gap: 10px;
-      }
-
-      .tips-list p {
-        padding-left: 2px;
-      }
-
       @media (max-width: 980px) {
-        .hero-grid,
-        .cards-3,
-        .cards-2,
-        .use-grid,
-        .landing-section-grid,
-        .result-grid {
+        .hero-grid, .cards-3, .cards-2, .use-grid, .landing-section-grid, .result-grid {
           grid-template-columns: 1fr;
         }
 
-        .hero-copy,
-        .upload-card {
+        .hero-copy, .upload-card {
           padding: 24px;
         }
 
-        .hero-points {
-          grid-template-columns: 1fr;
-        }
+        .hero-points { grid-template-columns: 1fr; }
 
         .nav {
           flex-direction: column;
           align-items: flex-start;
         }
 
-        .nav-links {
-          border-radius: 18px;
-        }
-
-        .preview-frame {
-          height: 560px;
-        }
+        .nav-links { border-radius: 18px; }
+        .preview-frame { height: 560px; }
       }
     </style>
   </head>
@@ -870,16 +716,7 @@ function pageTemplate({
   `;
 }
 
-function renderLandingPage({
-  pathName,
-  title,
-  description,
-  heading,
-  intro,
-  bullets = [],
-  tips = [],
-  note = ''
-}) {
+function renderLandingPage({ pathName, title, description, heading, intro, bullets = [], tips = [], note = '' }) {
   return pageTemplate({
     title,
     description,
@@ -920,100 +757,6 @@ function renderLandingPage({
       </section>
     `
   });
-}
-
-async function imageToPdf(inputPath, outputPath, mode = 'fit') {
-  const metadata = await sharp(inputPath).metadata();
-  const pagePortrait = { width: 1200, height: 1800 };
-
-  let pipeline = sharp(inputPath);
-
-  if (mode === 'autorotate' && metadata.width && metadata.height && metadata.width > metadata.height) {
-    pipeline = pipeline.rotate(90);
-  }
-
-  const fitMode = mode === 'fill' ? 'cover' : 'contain';
-
-  const imageBuffer = await pipeline
-    .resize(pagePortrait.width, pagePortrait.height, {
-      fit: fitMode,
-      position: 'center',
-      background: { r: 255, g: 255, b: 255, alpha: 1 }
-    })
-    .png()
-    .toBuffer();
-
-  const pdfDoc = await PDFDocument.create();
-  const page = pdfDoc.addPage([288, 432]);
-
-  const embedded = await pdfDoc.embedPng(imageBuffer);
-  page.drawImage(embedded, {
-    x: 0,
-    y: 0,
-    width: 288,
-    height: 432
-  });
-
-  const pdfBytes = await pdfDoc.save();
-  fs.writeFileSync(outputPath, pdfBytes);
-
-  return { pageCount: 1 };
-}
-
-async function pdfTo4x6(inputPath, outputPath, mode = 'fit') {
-  const existingPdfBytes = fs.readFileSync(inputPath);
-  const existingPdf = await PDFDocument.load(existingPdfBytes);
-  const newPdf = await PDFDocument.create();
-
-  const pageIndices = existingPdf.getPageIndices();
-  const copiedPages = await newPdf.copyPages(existingPdf, pageIndices);
-
-  for (const copiedPage of copiedPages) {
-    const sourceWidth = copiedPage.getWidth();
-    const sourceHeight = copiedPage.getHeight();
-
-    const targetWidth = 288;
-    const targetHeight = 432;
-    const page = newPdf.addPage([targetWidth, targetHeight]);
-
-    const shouldRotate = mode === 'autorotate' && sourceWidth > sourceHeight;
-
-    const effectiveWidth = shouldRotate ? sourceHeight : sourceWidth;
-    const effectiveHeight = shouldRotate ? sourceWidth : sourceHeight;
-
-    const scale =
-      mode === 'fill'
-        ? Math.max(targetWidth / effectiveWidth, targetHeight / effectiveHeight)
-        : Math.min(targetWidth / effectiveWidth, targetHeight / effectiveHeight);
-
-    const drawnWidth = effectiveWidth * scale;
-    const drawnHeight = effectiveHeight * scale;
-
-    const x = (targetWidth - drawnWidth) / 2;
-    const y = (targetHeight - drawnHeight) / 2;
-
-    if (shouldRotate) {
-      page.drawPage(copiedPage, {
-        x: targetWidth - x,
-        y,
-        xScale: scale,
-        yScale: scale,
-        rotate: degrees(90)
-      });
-    } else {
-      page.drawPage(copiedPage, {
-        x,
-        y,
-        xScale: scale,
-        yScale: scale
-      });
-    }
-  }
-
-  const pdfBytes = await newPdf.save();
-  fs.writeFileSync(outputPath, pdfBytes);
-
-  return { pageCount: copiedPages.length };
 }
 
 app.get('/healthz', (req, res) => {
@@ -1192,27 +935,272 @@ app.get('/', (req, res) => {
         <div class="cards-2">
           <div class="info-card">
             <h3>Focused instead of generic</h3>
-            <p>
-              This is not another broad file converter. It is built around one job: getting shipping labels into a usable 4x6 thermal format.
-            </p>
+            <p>This is not another broad file converter. It is built around one job: getting shipping labels into a usable 4x6 thermal format.</p>
           </div>
           <div class="info-card">
             <h3>Better workflow confidence</h3>
-            <p>
-              You can now preview the converted PDF before downloading it, which makes it easier to catch sizing or layout issues before printing.
-            </p>
+            <p>You can now preview the converted PDF before downloading it, which makes it easier to catch sizing or layout issues before printing.</p>
           </div>
         </div>
       </section>
 
       <section class="cta">
         <h2>Fix your shipping label in seconds</h2>
-        <p>
-          Upload your file, choose the best fit mode, preview the result, and download a cleaner PDF for your thermal printer.
-        </p>
+        <p>Upload your file, choose the best fit mode, preview the result, and download a cleaner PDF for your thermal printer.</p>
         <a class="btn" href="/">Start with a label upload</a>
       </section>
     `
+  }));
+});
+
+app.get('/faq', (req, res) => {
+  res.send(pageTemplate({
+    title: 'FAQ | PDF to Thermal',
+    description: 'Frequently asked questions about PDF to Thermal.',
+    canonicalPath: '/faq',
+    content: `
+      <section class="section">
+        <div class="card" style="padding: 28px;">
+          <h1 class="section-title">Frequently asked questions</h1>
+          <p class="section-subtitle">Quick answers about supported files, output format, and how this version works.</p>
+
+          <div class="faq-grid">
+            <div class="faq-item">
+              <h3>What file types can I upload?</h3>
+              <p>PDF, PNG, JPG, and JPEG are supported in the current version.</p>
+            </div>
+            <div class="faq-item">
+              <h3>What size is the output?</h3>
+              <p>The tool creates a 4x6 PDF intended for common thermal label printers.</p>
+            </div>
+            <div class="faq-item">
+              <h3>Does it convert every page in a PDF now?</h3>
+              <p>Yes. PDF uploads are converted page by page into a multi-page 4x6 PDF output.</p>
+            </div>
+            <div class="faq-item">
+              <h3>Can I preview the result before downloading?</h3>
+              <p>Yes. The completion page includes an on-screen PDF preview.</p>
+            </div>
+            <div class="faq-item">
+              <h3>What does “Crop tighter to fill 4x6” do?</h3>
+              <p>It scales more aggressively so the label fills more of the page, which can crop edges slightly.</p>
+            </div>
+            <div class="faq-item">
+              <h3>What does “Rotate for best fit” do?</h3>
+              <p>It rotates wide image labels, and attempts a better fit for wide PDF pages as well.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    `
+  }));
+});
+
+app.get('/privacy', (req, res) => {
+  res.send(pageTemplate({
+    title: 'Privacy Policy | PDF to Thermal',
+    description: 'Privacy information for PDF to Thermal.',
+    canonicalPath: '/privacy',
+    content: `
+      <section class="section">
+        <div class="card" style="padding: 28px;">
+          <h1 class="section-title">Privacy Policy</h1>
+          <div class="legal">
+            <p>PDF to Thermal temporarily processes files you upload in order to generate a converted 4x6 output file.</p>
+            <p>Uploaded files and generated outputs are stored for a limited period to allow processing and download, then are cleaned up automatically as part of normal site operation.</p>
+            <p>PDF to Thermal is not intended for highly sensitive, confidential, or regulated documents. Do not upload files containing information you would not want temporarily handled by an online conversion tool.</p>
+            <p>We use analytics to understand site traffic and improve the product experience. This may include aggregate website usage information such as page views, visits, and basic interaction data.</p>
+            <p>If you have privacy questions about the service, contact <strong>${escapeHtml(SUPPORT_EMAIL)}</strong>.</p>
+          </div>
+        </div>
+      </section>
+    `
+  }));
+});
+
+app.get('/terms', (req, res) => {
+  res.send(pageTemplate({
+    title: 'Terms | PDF to Thermal',
+    description: 'Terms of use for PDF to Thermal.',
+    canonicalPath: '/terms',
+    content: `
+      <section class="section">
+        <div class="card" style="padding: 28px;">
+          <h1 class="section-title">Terms of Use</h1>
+          <div class="legal">
+            <p>PDF to Thermal is provided on an as-is, as-available basis. Features, formatting behavior, and performance may change as the tool improves.</p>
+            <p>You agree not to upload unlawful content, malicious files, copyrighted material you do not have the right to process, or files intended to disrupt the service.</p>
+            <p>You are responsible for reviewing converted output before using it for shipment, returns, or business operations. Always verify readability, fit, and placement before printing in volume.</p>
+            <p>PDF to Thermal does not guarantee carrier acceptance, barcode scannability, or compatibility for every possible label source format.</p>
+            <p>Questions about these terms can be directed to <strong>${escapeHtml(SUPPORT_EMAIL)}</strong>.</p>
+          </div>
+        </div>
+      </section>
+    `
+  }));
+});
+
+app.get('/contact', (req, res) => {
+  res.send(pageTemplate({
+    title: 'Contact | PDF to Thermal',
+    description: 'Contact PDF to Thermal.',
+    canonicalPath: '/contact',
+    content: `
+      <section class="section">
+        <div class="card" style="padding: 28px;">
+          <h1 class="section-title">Contact</h1>
+          <div class="contact-list">
+            <p>Need help with the site, have feedback, or want to report a problem with a conversion?</p>
+            <p>Email: <strong>${escapeHtml(SUPPORT_EMAIL)}</strong></p>
+            <p>Best things to include in your message: what file type you used, which conversion mode you selected, and what happened after upload.</p>
+            <p>Support requests are best sent with enough detail to reproduce the issue, especially if the problem appears tied to a specific label layout.</p>
+          </div>
+        </div>
+      </section>
+    `
+  }));
+});
+
+app.get('/usps-label-to-4x6', (req, res) => {
+  res.send(renderLandingPage({
+    pathName: '/usps-label-to-4x6',
+    title: 'USPS Label to 4x6 | PDF to Thermal',
+    description: 'Convert a USPS shipping label into a 4x6 thermal-printer-ready PDF.',
+    heading: 'Convert USPS labels to 4x6',
+    intro: 'PDF to Thermal helps you take a USPS label in PDF or image form and turn it into a 4x6 PDF for thermal printing.',
+    bullets: ['Useful when a USPS label does not line up well on a thermal printer.', 'Supports PDF, JPG, PNG, and JPEG.', 'Lets you choose fit, fill, or auto-rotate modes.'],
+    tips: ['Use “Fit entire label” if you want to preserve everything on the page.', 'Use “Fill 4x6” when the label looks too small after conversion.', 'Use “Rotate for best fit” when the source label is wide.'],
+    note: 'PDF uploads can now preserve multiple pages in the converted output.'
+  }));
+});
+
+app.get('/ups-label-to-4x6', (req, res) => {
+  res.send(renderLandingPage({
+    pathName: '/ups-label-to-4x6',
+    title: 'UPS Label to 4x6 | PDF to Thermal',
+    description: 'Convert a UPS shipping label into a 4x6 thermal-printer-ready PDF.',
+    heading: 'Convert UPS labels to 4x6',
+    intro: 'Use PDF to Thermal to reformat UPS labels into a standard 4x6 PDF for thermal label printers.',
+    bullets: ['Helps with awkward page sizes and image-based labels.', 'Designed for common shipping workflows.', 'Quick browser-based conversion.'],
+    tips: ['Start with Fit mode if you are not sure which one to use.', 'Try Fill mode if the label area looks too small.', 'Use Auto Rotate for wide source files.'],
+    note: 'Different label layouts may behave differently depending on the source PDF or image proportions.'
+  }));
+});
+
+app.get('/fedex-label-to-4x6', (req, res) => {
+  res.send(renderLandingPage({
+    pathName: '/fedex-label-to-4x6',
+    title: 'FedEx Label to 4x6 | PDF to Thermal',
+    description: 'Convert a FedEx shipping label into a 4x6 thermal-printer-ready PDF.',
+    heading: 'Convert FedEx labels to 4x6',
+    intro: 'Convert FedEx labels into a 4x6 PDF that is easier to print on thermal label printers.',
+    bullets: ['Good for PDF and image-based labels.', 'Includes fit, fill, and auto-rotate modes.', 'Made for thermal label printing, not generic conversion.'],
+    tips: ['Use Fit mode for safest full-label output.', 'Use Fill mode for larger label coverage.', 'If the label is horizontal, try Auto Rotate first.'],
+    note: 'This tool is focused on simple 4x6 formatting rather than advanced carrier-specific editing.'
+  }));
+});
+
+app.get('/amazon-return-label-to-4x6', (req, res) => {
+  res.send(renderLandingPage({
+    pathName: '/amazon-return-label-to-4x6',
+    title: 'Amazon Return Label to 4x6 | PDF to Thermal',
+    description: 'Convert an Amazon return label into a 4x6 thermal-printer-ready PDF.',
+    heading: 'Convert Amazon return labels to 4x6',
+    intro: 'If an Amazon return label is not ready for a thermal printer, PDF to Thermal can help reformat it into a 4x6 PDF.',
+    bullets: ['Useful for return labels that arrive in awkward page layouts.', 'Simple browser workflow.', 'Designed for quick print-ready output.'],
+    tips: ['Fit mode is usually the best starting point.', 'Use Fill if the label looks too small on the final PDF.', 'Try Auto Rotate if the source is landscape.'],
+    note: 'Return labels can vary a lot, so test the output before using it for an actual shipment.'
+  }));
+});
+
+app.get('/ebay-label-to-4x6', (req, res) => {
+  res.send(renderLandingPage({
+    pathName: '/ebay-label-to-4x6',
+    title: 'eBay Label to 4x6 | PDF to Thermal',
+    description: 'Convert an eBay shipping label into a 4x6 thermal-printer-ready PDF.',
+    heading: 'Convert eBay labels to 4x6',
+    intro: 'PDF to Thermal helps eBay sellers convert shipping labels into a simpler 4x6 PDF format for thermal printing.',
+    bullets: ['Made for seller workflows.', 'Works with PDF and image files.', 'Fast upload, convert, and download flow.'],
+    tips: ['Use Fit when you want everything preserved.', 'Try Fill for larger printed label area.', 'Use Auto Rotate on wide source labels.'],
+    note: 'Always preview the final PDF before printing multiple labels.'
+  }));
+});
+
+app.get('/etsy-label-to-4x6', (req, res) => {
+  res.send(renderLandingPage({
+    pathName: '/etsy-label-to-4x6',
+    title: 'Etsy Label to 4x6 | PDF to Thermal',
+    description: 'Convert an Etsy shipping label into a 4x6 thermal-printer-ready PDF.',
+    heading: 'Convert Etsy labels to 4x6',
+    intro: 'PDF to Thermal gives Etsy sellers a quick way to turn shipping labels into a 4x6 PDF for thermal label printers.',
+    bullets: ['Useful for home-based seller workflows.', 'Helps avoid printer workarounds.', 'Simple conversion options for better fit.'],
+    tips: ['Fit mode is the safest option first.', 'Fill mode helps if the output looks too small.', 'Try Auto Rotate for wide or sideways source labels.'],
+    note: 'This tool is built for speed and simplicity rather than advanced label editing.'
+  }));
+});
+
+app.get('/pdf-to-4x6-label', (req, res) => {
+  res.send(renderLandingPage({
+    pathName: '/pdf-to-4x6-label',
+    title: 'PDF to 4x6 Label Converter | PDF to Thermal',
+    description: 'Convert a PDF shipping label into a 4x6 thermal-printer-ready PDF.',
+    heading: 'Convert PDF labels to 4x6',
+    intro: 'If you have a shipping label in PDF form and need it resized for a 4x6 thermal printer, PDF to Thermal is built for that exact job.',
+    bullets: ['Useful for standard PDF labels that do not print cleanly on a 4x6 printer.', 'Focused on shipping labels rather than generic document conversion.', 'Good for sellers, returns, and small shipping workflows.'],
+    tips: ['Use Fit mode first when preserving the full page matters.', 'Use Fill mode if the label looks too small after conversion.', 'Use Auto Rotate if the original PDF page is wide.'],
+    note: 'PDF uploads now convert all pages into a multi-page 4x6 output file.'
+  }));
+});
+
+app.get('/shipping-label-to-4x6', (req, res) => {
+  res.send(renderLandingPage({
+    pathName: '/shipping-label-to-4x6',
+    title: 'Shipping Label to 4x6 | PDF to Thermal',
+    description: 'Convert a shipping label into a 4x6 thermal-printer-ready PDF.',
+    heading: 'Convert shipping labels to 4x6',
+    intro: 'PDF to Thermal is designed to take shipping labels in common formats and convert them into a cleaner 4x6 layout for thermal printers.',
+    bullets: ['Works with PDF, PNG, JPG, and JPEG label files.', 'Designed for a simple upload, convert, and download flow.', 'Useful for carrier labels and marketplace return labels.'],
+    tips: ['Use Fit if you want the least risky resizing option.', 'Use Fill if you want the output to occupy more of the page.', 'Test a single label before printing many.'],
+    note: 'Shipping labels vary by source, so always preview the final PDF before operational use.'
+  }));
+});
+
+app.get('/thermal-label-converter', (req, res) => {
+  res.send(renderLandingPage({
+    pathName: '/thermal-label-converter',
+    title: 'Thermal Label Converter | PDF to Thermal',
+    description: 'Use PDF to Thermal as a thermal label converter for 4x6 printing.',
+    heading: 'Thermal label converter for 4x6 printing',
+    intro: 'PDF to Thermal is a focused thermal label converter that reformats labels for common 4x6 thermal printer workflows.',
+    bullets: ['Not a generic converter site with dozens of unrelated tools.', 'Built specifically around shipping-label conversion.', 'Useful for people who need simple 4x6 output fast.'],
+    tips: ['Image labels can benefit from Auto Rotate when they start sideways.', 'Fit mode is best when barcodes and text need to stay fully visible.', 'Fill mode is best when you want more page coverage.'],
+    note: 'Some label layouts may still need manual review depending on barcode placement and margins.'
+  }));
+});
+
+app.get('/pdf-to-thermal-printer', (req, res) => {
+  res.send(renderLandingPage({
+    pathName: '/pdf-to-thermal-printer',
+    title: 'PDF to Thermal Printer | PDF to Thermal',
+    description: 'Convert a PDF shipping label for easier use on a thermal printer.',
+    heading: 'Convert a PDF for thermal printer use',
+    intro: 'If your PDF label was not created with a 4x6 thermal printer in mind, PDF to Thermal helps reformat it into a more usable output.',
+    bullets: ['Useful when a normal PDF page does not print well on a thermal printer.', 'Focuses on simple 4x6 conversion rather than full document editing.', 'Good for one-off labels and repeat seller workflows.'],
+    tips: ['Start with Fit to preserve the full source page.', 'Use Fill for larger visual output when acceptable.', 'Use Auto Rotate if the source is wider than it is tall.'],
+    note: 'Barcodes, margins, and source proportions can affect the final result, so preview before use.'
+  }));
+});
+
+app.get('/amazon-return-label-to-thermal-printer', (req, res) => {
+  res.send(renderLandingPage({
+    pathName: '/amazon-return-label-to-thermal-printer',
+    title: 'Amazon Return Label to Thermal Printer | PDF to Thermal',
+    description: 'Convert an Amazon return label for easier printing on a thermal printer.',
+    heading: 'Convert Amazon return labels for thermal printers',
+    intro: 'Amazon return labels do not always arrive in the ideal format for thermal printers. PDF to Thermal helps bridge that gap with a simple 4x6 workflow.',
+    bullets: ['Useful for return labels that start as full-page PDFs or awkward image layouts.', 'Fast browser-based conversion.', 'Designed for simple home and small-business return workflows.'],
+    tips: ['Try Fit mode first for safest output.', 'Use Fill if the result looks too small.', 'Preview before printing your final label.'],
+    note: 'Because return labels can vary, always verify the final PDF before attaching it to a package.'
   }));
 });
 
@@ -1397,7 +1385,7 @@ app.post('/convert', (req, res, next) => {
       `
     }));
   } finally {
-      // Keep original upload around temporarily so it can be opened from the results page.
+    // Keep original upload temporarily for results page access.
   }
 });
 
