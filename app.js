@@ -1745,7 +1745,6 @@ app.post('/convert', (req, res, next) => {
     // Keep original upload around temporarily so it can be opened from the results page.
   }
 });
-
 app.listen(PORT, () => {
   console.log(\`PDF to Thermal running on port \${PORT}\`);
 });
