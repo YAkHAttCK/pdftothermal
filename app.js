@@ -8,7 +8,8 @@ const { PDFDocument, degrees } = require('pdf-lib');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SITE_URL = 'https://pdftothermal.com';
-const GA_ID = 'G-CV6R7PF4PH';
+const SUPPORT_EMAIL = 'support@pdftothermal.com';
+const GA_ID = 'G-XCBKTHSF8B';
 
 app.use(express.urlencoded({ extended: true }));
 
@@ -136,7 +137,6 @@ function pageTemplate({
       }
 
       * { box-sizing: border-box; }
-
       html { scroll-behavior: smooth; }
 
       body {
@@ -680,6 +680,9 @@ function pageTemplate({
           <a href="/amazon-return-label-to-4x6">Amazon Returns</a>
           <a href="/ebay-label-to-4x6">eBay</a>
           <a href="/etsy-label-to-4x6">Etsy</a>
+          <a href="/pdf-to-4x6-label">PDF to 4x6</a>
+          <a href="/shipping-label-to-4x6">Shipping Label to 4x6</a>
+          <a href="/thermal-label-converter">Thermal Label Converter</a>
         </div>
       </footer>
     </div>
@@ -765,6 +768,11 @@ app.get('/sitemap.xml', (req, res) => {
   <url><loc>${SITE_URL}/amazon-return-label-to-4x6</loc></url>
   <url><loc>${SITE_URL}/ebay-label-to-4x6</loc></url>
   <url><loc>${SITE_URL}/etsy-label-to-4x6</loc></url>
+  <url><loc>${SITE_URL}/pdf-to-4x6-label</loc></url>
+  <url><loc>${SITE_URL}/shipping-label-to-4x6</loc></url>
+  <url><loc>${SITE_URL}/thermal-label-converter</loc></url>
+  <url><loc>${SITE_URL}/pdf-to-thermal-printer</loc></url>
+  <url><loc>${SITE_URL}/amazon-return-label-to-thermal-printer</loc></url>
 </urlset>`);
 });
 
@@ -988,9 +996,11 @@ app.get('/privacy', (req, res) => {
         <div class="card" style="padding: 28px;">
           <h1 class="section-title" style="margin-bottom: 10px;">Privacy Policy</h1>
           <div class="legal">
-            <p>PDF to Thermal is a file-processing tool. When you upload a file, it is temporarily processed to create a converted output.</p>
-            <p>This early version is intended for testing and development. Before broader public launch, this page should be updated with your final retention, deletion, and usage policies.</p>
-            <p>Do not upload highly sensitive files until your final privacy language and storage practices are fully in place.</p>
+            <p>PDF to Thermal temporarily processes files you upload in order to generate a converted 4x6 output file.</p>
+            <p>Uploaded files and generated outputs are stored for a limited period to allow processing and download, then are cleaned up automatically as part of normal site operation.</p>
+            <p>PDF to Thermal is not intended for highly sensitive, confidential, or regulated documents. Do not upload files containing information you would not want temporarily handled by an online conversion tool.</p>
+            <p>We use analytics to understand site traffic and improve the product experience. This may include aggregate website usage information such as page views, visits, and basic interaction data.</p>
+            <p>If you have privacy questions about the service, contact <strong>${escapeHtml(SUPPORT_EMAIL)}</strong>.</p>
           </div>
         </div>
       </section>
@@ -1008,9 +1018,11 @@ app.get('/terms', (req, res) => {
         <div class="card" style="padding: 28px;">
           <h1 class="section-title" style="margin-bottom: 10px;">Terms of Use</h1>
           <div class="legal">
-            <p>PDF to Thermal is provided as-is in this early version. Features, performance, and file-handling behavior may change as the tool improves.</p>
-            <p>By using the site, you agree not to upload unlawful content, malicious files, or material you do not have the right to process.</p>
-            <p>Before public launch, this page should be updated with complete legal terms that match your final business and hosting setup.</p>
+            <p>PDF to Thermal is provided on an as-is, as-available basis. Features, formatting behavior, and performance may change as the tool improves.</p>
+            <p>You agree not to upload unlawful content, malicious files, copyrighted material you do not have the right to process, or files intended to disrupt the service.</p>
+            <p>You are responsible for reviewing converted output before using it for shipment, returns, or business operations. Always verify readability, fit, and placement before printing in volume.</p>
+            <p>PDF to Thermal does not guarantee carrier acceptance, barcode scannability, or compatibility for every possible label source format.</p>
+            <p>Questions about these terms can be directed to <strong>${escapeHtml(SUPPORT_EMAIL)}</strong>.</p>
           </div>
         </div>
       </section>
@@ -1028,9 +1040,10 @@ app.get('/contact', (req, res) => {
         <div class="card" style="padding: 28px;">
           <h1 class="section-title" style="margin-bottom: 10px;">Contact</h1>
           <div class="contact-list">
-            <p>This page is a placeholder for your public contact details.</p>
-            <p>Before launch, add your preferred contact method such as a support email, business contact form, or help desk link.</p>
-            <p>Suggested support email format: <strong>support@pdftothermal.com</strong></p>
+            <p>Need help with the site, have feedback, or want to report a problem with a conversion?</p>
+            <p>Email: <strong>${escapeHtml(SUPPORT_EMAIL)}</strong></p>
+            <p>Best things to include in your message: what file type you used, which conversion mode you selected, and what happened after upload.</p>
+            <p>Support requests are best sent with enough detail to reproduce the issue, especially if the problem appears tied to a specific label layout.</p>
           </div>
         </div>
       </section>
@@ -1161,6 +1174,111 @@ app.get('/etsy-label-to-4x6', (req, res) => {
       'Try Auto Rotate for wide or sideways source labels.'
     ],
     note: 'This tool is built for speed and simplicity rather than advanced label editing.'
+  }));
+});
+
+app.get('/pdf-to-4x6-label', (req, res) => {
+  res.send(renderLandingPage({
+    pathName: '/pdf-to-4x6-label',
+    title: 'PDF to 4x6 Label Converter | PDF to Thermal',
+    description: 'Convert a PDF shipping label into a 4x6 thermal-printer-ready PDF.',
+    heading: 'Convert PDF labels to 4x6',
+    intro: 'If you have a shipping label in PDF form and need it resized for a 4x6 thermal printer, PDF to Thermal is built for that exact job.',
+    bullets: [
+      'Useful for standard PDF labels that do not print cleanly on a 4x6 printer.',
+      'Focused on shipping labels rather than generic document conversion.',
+      'Good for sellers, returns, and small shipping workflows.'
+    ],
+    tips: [
+      'Use Fit mode first when preserving the full page matters.',
+      'Use Fill mode if the label looks too small after conversion.',
+      'Use Auto Rotate if the original PDF page is wide.'
+    ],
+    note: 'This version works on the first page of a PDF, so multi-page jobs should be reviewed before use.'
+  }));
+});
+
+app.get('/shipping-label-to-4x6', (req, res) => {
+  res.send(renderLandingPage({
+    pathName: '/shipping-label-to-4x6',
+    title: 'Shipping Label to 4x6 | PDF to Thermal',
+    description: 'Convert a shipping label into a 4x6 thermal-printer-ready PDF.',
+    heading: 'Convert shipping labels to 4x6',
+    intro: 'PDF to Thermal is designed to take shipping labels in common formats and convert them into a cleaner 4x6 layout for thermal printers.',
+    bullets: [
+      'Works with PDF, PNG, JPG, and JPEG label files.',
+      'Designed for a simple upload, convert, and download flow.',
+      'Useful for carrier labels and marketplace return labels.'
+    ],
+    tips: [
+      'Use Fit if you want the least risky resizing option.',
+      'Use Fill if you want the output to occupy more of the page.',
+      'Test a single label before printing many.'
+    ],
+    note: 'Shipping labels vary by source, so always preview the final PDF before operational use.'
+  }));
+});
+
+app.get('/thermal-label-converter', (req, res) => {
+  res.send(renderLandingPage({
+    pathName: '/thermal-label-converter',
+    title: 'Thermal Label Converter | PDF to Thermal',
+    description: 'Use PDF to Thermal as a thermal label converter for 4x6 printing.',
+    heading: 'Thermal label converter for 4x6 printing',
+    intro: 'PDF to Thermal is a focused thermal label converter that reformats labels for common 4x6 thermal printer workflows.',
+    bullets: [
+      'Not a generic converter site with dozens of unrelated tools.',
+      'Built specifically around shipping-label conversion.',
+      'Useful for people who need simple 4x6 output fast.'
+    ],
+    tips: [
+      'Image labels can benefit from Auto Rotate when they start sideways.',
+      'Fit mode is best when barcodes and text need to stay fully visible.',
+      'Fill mode is best when you want more page coverage.'
+    ],
+    note: 'Some label layouts may still need manual review depending on barcode placement and margins.'
+  }));
+});
+
+app.get('/pdf-to-thermal-printer', (req, res) => {
+  res.send(renderLandingPage({
+    pathName: '/pdf-to-thermal-printer',
+    title: 'PDF to Thermal Printer | PDF to Thermal',
+    description: 'Convert a PDF shipping label for easier use on a thermal printer.',
+    heading: 'Convert a PDF for thermal printer use',
+    intro: 'If your PDF label was not created with a 4x6 thermal printer in mind, PDF to Thermal helps reformat it into a more usable output.',
+    bullets: [
+      'Useful when a normal PDF page does not print well on a thermal printer.',
+      'Focuses on simple 4x6 conversion rather than full document editing.',
+      'Good for one-off labels and repeat seller workflows.'
+    ],
+    tips: [
+      'Start with Fit to preserve the full source page.',
+      'Use Fill for larger visual output when acceptable.',
+      'Use Auto Rotate if the source is wider than it is tall.'
+    ],
+    note: 'Barcodes, margins, and source proportions can affect the final result, so preview before use.'
+  }));
+});
+
+app.get('/amazon-return-label-to-thermal-printer', (req, res) => {
+  res.send(renderLandingPage({
+    pathName: '/amazon-return-label-to-thermal-printer',
+    title: 'Amazon Return Label to Thermal Printer | PDF to Thermal',
+    description: 'Convert an Amazon return label for easier printing on a thermal printer.',
+    heading: 'Convert Amazon return labels for thermal printers',
+    intro: 'Amazon return labels do not always arrive in the ideal format for thermal printers. PDF to Thermal helps bridge that gap with a simple 4x6 workflow.',
+    bullets: [
+      'Useful for return labels that start as full-page PDFs or awkward image layouts.',
+      'Fast browser-based conversion.',
+      'Designed for simple home and small-business return workflows.'
+    ],
+    tips: [
+      'Try Fit mode first for safest output.',
+      'Use Fill if the result looks too small.',
+      'Preview before printing your final label.'
+    ],
+    note: 'Because return labels can vary, always verify the final PDF before attaching it to a package.'
   }));
 });
 
