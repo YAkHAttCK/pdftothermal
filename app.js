@@ -82,7 +82,12 @@ function escapeHtml(str = '') {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function safeFileName(name = '') {
+  return String(name).replace(/\.[^/.]+$/, '');
 }
 
 function pageTemplate({
@@ -120,20 +125,28 @@ function pageTemplate({
 
     <style>
       :root {
-        --bg: #f4f7fb;
-        --card: #ffffff;
+        --bg: #0b1020;
+        --bg-soft: #10172d;
+        --panel: rgba(255,255,255,0.92);
+        --panel-2: rgba(255,255,255,0.72);
         --text: #0f172a;
-        --muted: #64748b;
-        --line: #dbe4ee;
+        --text-soft: #475569;
+        --line: rgba(148,163,184,0.25);
+        --line-strong: rgba(99,102,241,0.22);
         --primary: #2563eb;
         --primary-dark: #1d4ed8;
-        --accent: #eff6ff;
+        --primary-soft: #dbeafe;
+        --accent: #7c3aed;
+        --accent-soft: #ede9fe;
         --success: #166534;
         --error: #b91c1c;
         --warning: #92400e;
         --warning-bg: #fff7ed;
-        --shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
-        --radius: 18px;
+        --shadow-lg: 0 24px 70px rgba(2, 6, 23, 0.18);
+        --shadow-md: 0 12px 34px rgba(15, 23, 42, 0.10);
+        --radius-xl: 24px;
+        --radius-lg: 18px;
+        --radius-md: 14px;
       }
 
       * { box-sizing: border-box; }
@@ -142,11 +155,13 @@ function pageTemplate({
       body {
         margin: 0;
         font-family: Inter, Arial, Helvetica, sans-serif;
-        background:
-          radial-gradient(circle at top left, #eef4ff 0, transparent 32%),
-          radial-gradient(circle at top right, #eef8ff 0, transparent 28%),
-          var(--bg);
         color: var(--text);
+        background:
+          radial-gradient(circle at 10% 10%, rgba(37,99,235,0.28) 0%, transparent 24%),
+          radial-gradient(circle at 90% 10%, rgba(124,58,237,0.22) 0%, transparent 22%),
+          radial-gradient(circle at 50% 100%, rgba(59,130,246,0.12) 0%, transparent 30%),
+          linear-gradient(180deg, #eef4ff 0%, #f8fbff 42%, #f4f7fb 100%);
+        min-height: 100vh;
       }
 
       a {
@@ -156,17 +171,34 @@ function pageTemplate({
 
       a:hover { text-decoration: underline; }
 
+      .shell {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .shell::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background:
+          radial-gradient(circle at 20% 0%, rgba(37,99,235,0.07), transparent 24%),
+          radial-gradient(circle at 80% 0%, rgba(124,58,237,0.07), transparent 24%);
+        pointer-events: none;
+      }
+
       .container {
-        width: min(1120px, calc(100% - 32px));
+        width: min(1180px, calc(100% - 32px));
         margin: 0 auto;
+        position: relative;
+        z-index: 1;
       }
 
       .nav {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 16px;
-        padding: 20px 0 10px;
+        gap: 18px;
+        padding: 22px 0 12px;
       }
 
       .brand {
@@ -177,99 +209,142 @@ function pageTemplate({
         color: var(--text);
       }
 
+      .brand:hover { text-decoration: none; }
+
       .brand-badge {
-        width: 40px;
-        height: 40px;
-        border-radius: 12px;
-        background: linear-gradient(135deg, var(--primary), #60a5fa);
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, var(--primary), var(--accent));
         display: inline-flex;
         align-items: center;
         justify-content: center;
         color: white;
         font-size: 14px;
         font-weight: 800;
-        box-shadow: var(--shadow);
+        box-shadow: var(--shadow-md);
+      }
+
+      .brand-text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.05;
+      }
+
+      .brand-text span:first-child {
+        font-size: 16px;
+      }
+
+      .brand-text span:last-child {
+        font-size: 11px;
+        color: var(--text-soft);
+        font-weight: 700;
+        margin-top: 2px;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
       }
 
       .nav-links {
         display: flex;
         gap: 18px;
         flex-wrap: wrap;
+        background: rgba(255,255,255,0.72);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.7);
+        padding: 10px 14px;
+        border-radius: 999px;
+        box-shadow: var(--shadow-md);
       }
 
       .nav-links a {
-        color: var(--muted);
-        font-weight: 600;
+        color: var(--text-soft);
+        font-weight: 700;
+        font-size: 14px;
       }
 
       .hero {
-        padding: 28px 0 18px;
+        padding: 26px 0 20px;
       }
 
       .hero-grid {
         display: grid;
-        grid-template-columns: 1.15fr 0.85fr;
+        grid-template-columns: 1.1fr 0.9fr;
         gap: 24px;
         align-items: stretch;
       }
 
       .hero-card,
       .card {
-        background: var(--card);
-        border: 1px solid rgba(219, 228, 238, 0.8);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
+        background: var(--panel);
+        backdrop-filter: blur(14px);
+        border: 1px solid rgba(255,255,255,0.85);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-lg);
       }
 
       .hero-copy {
-        padding: 34px;
+        padding: 36px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero-copy::after {
+        content: "";
+        position: absolute;
+        right: -40px;
+        top: -40px;
+        width: 180px;
+        height: 180px;
+        background: radial-gradient(circle, rgba(37,99,235,0.12), transparent 65%);
+        pointer-events: none;
       }
 
       .eyebrow {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        background: var(--accent);
+        background: linear-gradient(135deg, var(--primary-soft), var(--accent-soft));
         color: var(--primary);
-        border: 1px solid #bfdbfe;
-        padding: 8px 12px;
+        border: 1px solid rgba(99,102,241,0.16);
+        padding: 9px 13px;
         border-radius: 999px;
         font-size: 13px;
-        font-weight: 700;
-        margin-bottom: 16px;
+        font-weight: 800;
+        margin-bottom: 18px;
+        box-shadow: 0 8px 20px rgba(59,130,246,0.12);
       }
 
       h1 {
         margin: 0 0 14px;
-        font-size: clamp(36px, 5vw, 56px);
-        line-height: 1.02;
-        letter-spacing: -0.03em;
+        font-size: clamp(40px, 5vw, 62px);
+        line-height: 0.98;
+        letter-spacing: -0.04em;
       }
 
       h2, h3 {
-        letter-spacing: -0.02em;
+        letter-spacing: -0.03em;
       }
 
       .lead {
         margin: 0 0 22px;
-        color: var(--muted);
+        color: var(--text-soft);
         font-size: 18px;
-        line-height: 1.6;
-        max-width: 700px;
+        line-height: 1.65;
+        max-width: 720px;
       }
 
       .hero-points {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 12px;
-        margin: 20px 0 22px;
+        margin: 22px 0;
       }
 
       .hero-point {
-        background: #f8fafc;
+        background: rgba(248,250,252,0.95);
         border: 1px solid var(--line);
-        border-radius: 14px;
-        padding: 14px;
+        border-radius: 16px;
+        padding: 15px;
       }
 
       .hero-point strong {
@@ -279,13 +354,13 @@ function pageTemplate({
       }
 
       .hero-point span {
-        color: var(--muted);
+        color: var(--text-soft);
         font-size: 14px;
-        line-height: 1.45;
+        line-height: 1.5;
       }
 
       .trust-line {
-        color: var(--muted);
+        color: var(--text-soft);
         font-size: 14px;
         line-height: 1.6;
       }
@@ -296,33 +371,33 @@ function pageTemplate({
 
       .upload-card h2 {
         margin: 0 0 10px;
-        font-size: 26px;
+        font-size: 27px;
       }
 
       .upload-card p {
         margin: 0 0 18px;
-        color: var(--muted);
-        line-height: 1.55;
+        color: var(--text-soft);
+        line-height: 1.6;
       }
 
       .upload-box {
-        border: 2px dashed #bfdbfe;
-        background: linear-gradient(180deg, #f8fbff 0%, #f7fbff 100%);
-        border-radius: 16px;
+        border: 2px dashed rgba(37,99,235,0.28);
+        background: linear-gradient(180deg, rgba(248,251,255,0.95) 0%, rgba(255,255,255,0.9) 100%);
+        border-radius: 18px;
         padding: 22px;
       }
 
       .upload-box label.main-label {
         display: block;
-        font-weight: 700;
+        font-weight: 800;
         margin-bottom: 10px;
       }
 
       input[type="file"] {
         width: 100%;
-        padding: 12px;
+        padding: 13px;
         border: 1px solid var(--line);
-        border-radius: 12px;
+        border-radius: 14px;
         background: white;
         margin-bottom: 14px;
       }
@@ -332,28 +407,44 @@ function pageTemplate({
         align-items: center;
         justify-content: center;
         gap: 8px;
-        min-height: 46px;
+        min-height: 48px;
         padding: 0 18px;
-        border-radius: 12px;
+        border-radius: 14px;
         border: 0;
-        background: var(--primary);
+        background: linear-gradient(135deg, var(--primary), var(--accent));
         color: white;
-        font-weight: 700;
+        font-weight: 800;
         cursor: pointer;
         text-decoration: none;
-        box-shadow: 0 10px 22px rgba(37, 99, 235, 0.22);
+        box-shadow: 0 14px 28px rgba(59,130,246,0.20);
+        transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
       }
 
       button:hover, .btn:hover {
-        background: var(--primary-dark);
         text-decoration: none;
+        transform: translateY(-1px);
+        box-shadow: 0 16px 32px rgba(59,130,246,0.24);
+      }
+
+      .btn.secondary {
+        background: white;
+        color: var(--primary);
+        border: 1px solid rgba(99,102,241,0.18);
+        box-shadow: var(--shadow-md);
+      }
+
+      .btn.ghost {
+        background: rgba(255,255,255,0.55);
+        color: var(--text);
+        border: 1px solid var(--line);
+        box-shadow: none;
       }
 
       .microcopy {
         margin-top: 12px;
-        color: var(--muted);
+        color: var(--text-soft);
         font-size: 13px;
-        line-height: 1.45;
+        line-height: 1.5;
       }
 
       .mode-box {
@@ -361,12 +452,12 @@ function pageTemplate({
         padding: 14px;
         background: white;
         border: 1px solid var(--line);
-        border-radius: 12px;
+        border-radius: 14px;
       }
 
       .mode-box-title {
         display: block;
-        font-weight: 700;
+        font-weight: 800;
         margin-bottom: 10px;
       }
 
@@ -383,25 +474,25 @@ function pageTemplate({
 
       .mode-option small {
         display: block;
-        color: var(--muted);
+        color: var(--text-soft);
         margin-left: 24px;
-        margin-top: 2px;
-        line-height: 1.4;
+        margin-top: 3px;
+        line-height: 1.45;
       }
 
       .section {
-        padding: 18px 0;
+        padding: 20px 0;
       }
 
       .section-title {
         margin: 0 0 16px;
-        font-size: 30px;
+        font-size: 31px;
       }
 
       .section-subtitle {
         margin: 0 0 24px;
-        color: var(--muted);
-        line-height: 1.6;
+        color: var(--text-soft);
+        line-height: 1.65;
         max-width: 760px;
       }
 
@@ -414,19 +505,20 @@ function pageTemplate({
       .step-card,
       .info-card,
       .mini-card,
-      .preview-card {
-        background: white;
-        border: 1px solid var(--line);
-        border-radius: 16px;
+      .preview-card,
+      .result-summary {
+        background: rgba(255,255,255,0.95);
+        border: 1px solid rgba(255,255,255,0.85);
+        border-radius: 18px;
         padding: 22px;
-        box-shadow: var(--shadow);
+        box-shadow: var(--shadow-md);
       }
 
       .step-number {
-        width: 34px;
-        height: 34px;
+        width: 36px;
+        height: 36px;
         border-radius: 999px;
-        background: var(--accent);
+        background: linear-gradient(135deg, var(--primary-soft), var(--accent-soft));
         color: var(--primary);
         display: inline-flex;
         align-items: center;
@@ -438,7 +530,8 @@ function pageTemplate({
       .step-card h3,
       .info-card h3,
       .mini-card h3,
-      .preview-card h3 {
+      .preview-card h3,
+      .result-summary h3 {
         margin: 0 0 8px;
         font-size: 19px;
       }
@@ -450,10 +543,11 @@ function pageTemplate({
       .legal p,
       .contact-list p,
       .landing-copy p,
-      .preview-card p {
+      .preview-card p,
+      .result-summary p {
         margin: 0;
-        color: var(--muted);
-        line-height: 1.6;
+        color: var(--text-soft);
+        line-height: 1.65;
       }
 
       .cards-2 {
@@ -469,11 +563,12 @@ function pageTemplate({
       }
 
       .use-item {
-        background: white;
-        border: 1px solid var(--line);
-        border-radius: 14px;
+        background: rgba(255,255,255,0.94);
+        border: 1px solid rgba(255,255,255,0.82);
+        border-radius: 16px;
         padding: 16px;
-        font-weight: 700;
+        font-weight: 800;
+        box-shadow: var(--shadow-md);
       }
 
       .warning-box {
@@ -483,28 +578,30 @@ function pageTemplate({
         background: var(--warning-bg);
         border-radius: 14px;
         color: var(--warning);
-        line-height: 1.55;
+        line-height: 1.6;
         font-size: 14px;
       }
 
       .cta {
-        margin: 18px 0 32px;
-        background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+        margin: 20px 0 34px;
+        background:
+          radial-gradient(circle at top right, rgba(255,255,255,0.16), transparent 26%),
+          linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #4f46e5 100%);
         color: white;
-        border-radius: 20px;
-        padding: 30px;
-        box-shadow: var(--shadow);
+        border-radius: 24px;
+        padding: 32px;
+        box-shadow: var(--shadow-lg);
       }
 
       .cta h2 {
         margin: 0 0 10px;
-        font-size: 30px;
+        font-size: 31px;
       }
 
       .cta p {
         margin: 0 0 18px;
-        color: rgba(255,255,255,0.82);
-        line-height: 1.6;
+        color: rgba(255,255,255,0.84);
+        line-height: 1.7;
         max-width: 760px;
       }
 
@@ -520,10 +617,11 @@ function pageTemplate({
       }
 
       .faq-item {
-        background: white;
-        border: 1px solid var(--line);
-        border-radius: 14px;
+        background: rgba(255,255,255,0.94);
+        border: 1px solid rgba(255,255,255,0.82);
+        border-radius: 16px;
         padding: 18px;
+        box-shadow: var(--shadow-md);
       }
 
       .faq-item h3 {
@@ -533,7 +631,7 @@ function pageTemplate({
 
       .footer {
         padding: 26px 0 48px;
-        color: var(--muted);
+        color: var(--text-soft);
         font-size: 14px;
       }
 
@@ -545,9 +643,9 @@ function pageTemplate({
       }
 
       .result-card {
-        max-width: 1120px;
+        max-width: 1180px;
         margin: 44px auto;
-        padding: 32px;
+        padding: 30px;
       }
 
       .status {
@@ -574,13 +672,13 @@ function pageTemplate({
 
       .result-card h1,
       .landing-copy h1 {
-        font-size: 36px;
+        font-size: 38px;
         margin-bottom: 12px;
       }
 
       .result-card p {
-        color: var(--muted);
-        line-height: 1.6;
+        color: var(--text-soft);
+        line-height: 1.65;
       }
 
       .button-row {
@@ -588,12 +686,6 @@ function pageTemplate({
         flex-wrap: wrap;
         gap: 12px;
         margin-top: 22px;
-      }
-
-      .btn.secondary {
-        background: #eef2ff;
-        color: var(--primary);
-        box-shadow: none;
       }
 
       .legal, .contact-list, .landing-copy {
@@ -619,37 +711,94 @@ function pageTemplate({
         align-items: center;
         padding: 8px 12px;
         border-radius: 999px;
-        background: #f8fafc;
+        background: rgba(248,250,252,0.95);
         border: 1px solid var(--line);
         font-size: 13px;
-        font-weight: 700;
+        font-weight: 800;
         color: var(--text);
       }
 
-      .preview-shell {
+      .result-grid {
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        gap: 20px;
         margin-top: 24px;
+      }
+
+      .result-meta {
+        display: grid;
+        gap: 18px;
+        align-content: start;
+      }
+
+      .meta-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .meta-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 10px 0;
+        border-bottom: 1px dashed rgba(148,163,184,0.24);
+      }
+
+      .meta-row:last-child {
+        border-bottom: 0;
+        padding-bottom: 0;
+      }
+
+      .meta-key {
+        font-size: 13px;
+        color: var(--text-soft);
+        font-weight: 700;
+      }
+
+      .meta-value {
+        font-size: 14px;
+        font-weight: 800;
+        color: var(--text);
+        text-align: right;
+        word-break: break-word;
+      }
+
+      .preview-shell {
+        display: grid;
+        gap: 18px;
       }
 
       .preview-frame {
         width: 100%;
-        height: 720px;
-        border: 1px solid var(--line);
-        border-radius: 14px;
+        height: 760px;
+        border: 1px solid rgba(148,163,184,0.25);
+        border-radius: 16px;
         background: #f8fafc;
       }
 
       .preview-tip {
         margin-top: 12px;
         font-size: 13px;
-        color: var(--muted);
+        color: var(--text-soft);
       }
 
-      @media (max-width: 920px) {
+      .tips-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .tips-list p {
+        padding-left: 2px;
+      }
+
+      @media (max-width: 980px) {
         .hero-grid,
         .cards-3,
         .cards-2,
         .use-grid,
-        .landing-section-grid {
+        .landing-section-grid,
+        .result-grid {
           grid-template-columns: 1fr;
         }
 
@@ -667,49 +816,58 @@ function pageTemplate({
           align-items: flex-start;
         }
 
+        .nav-links {
+          border-radius: 18px;
+        }
+
         .preview-frame {
-          height: 520px;
+          height: 560px;
         }
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <header class="nav">
-        <a class="brand" href="/">
-          <span class="brand-badge">PT</span>
-          <span>PDF to Thermal</span>
-        </a>
-        <nav class="nav-links">
-          <a href="/">Home</a>
-          <a href="/faq">FAQ</a>
-          <a href="/privacy">Privacy</a>
-          <a href="/terms">Terms</a>
-          <a href="/contact">Contact</a>
-        </nav>
-      </header>
+    <div class="shell">
+      <div class="container">
+        <header class="nav">
+          <a class="brand" href="/">
+            <span class="brand-badge">PT</span>
+            <span class="brand-text">
+              <span>PDF to Thermal</span>
+              <span>4x6 label converter</span>
+            </span>
+          </a>
+          <nav class="nav-links">
+            <a href="/">Home</a>
+            <a href="/faq">FAQ</a>
+            <a href="/privacy">Privacy</a>
+            <a href="/terms">Terms</a>
+            <a href="/contact">Contact</a>
+          </nav>
+        </header>
 
-      ${content}
+        ${content}
 
-      <footer class="footer">
-        <div>PDF to Thermal helps turn shipping labels into 4x6 thermal-printer-ready files.</div>
-        <div class="footer-links">
-          <a href="/">Home</a>
-          <a href="/faq">FAQ</a>
-          <a href="/privacy">Privacy</a>
-          <a href="/terms">Terms</a>
-          <a href="/contact">Contact</a>
-          <a href="/usps-label-to-4x6">USPS</a>
-          <a href="/ups-label-to-4x6">UPS</a>
-          <a href="/fedex-label-to-4x6">FedEx</a>
-          <a href="/amazon-return-label-to-4x6">Amazon Returns</a>
-          <a href="/ebay-label-to-4x6">eBay</a>
-          <a href="/etsy-label-to-4x6">Etsy</a>
-          <a href="/pdf-to-4x6-label">PDF to 4x6</a>
-          <a href="/shipping-label-to-4x6">Shipping Label to 4x6</a>
-          <a href="/thermal-label-converter">Thermal Label Converter</a>
-        </div>
-      </footer>
+        <footer class="footer">
+          <div>PDF to Thermal helps turn shipping labels into 4x6 thermal-printer-ready files.</div>
+          <div class="footer-links">
+            <a href="/">Home</a>
+            <a href="/faq">FAQ</a>
+            <a href="/privacy">Privacy</a>
+            <a href="/terms">Terms</a>
+            <a href="/contact">Contact</a>
+            <a href="/usps-label-to-4x6">USPS</a>
+            <a href="/ups-label-to-4x6">UPS</a>
+            <a href="/fedex-label-to-4x6">FedEx</a>
+            <a href="/amazon-return-label-to-4x6">Amazon Returns</a>
+            <a href="/ebay-label-to-4x6">eBay</a>
+            <a href="/etsy-label-to-4x6">Etsy</a>
+            <a href="/pdf-to-4x6-label">PDF to 4x6</a>
+            <a href="/shipping-label-to-4x6">Shipping Label to 4x6</a>
+            <a href="/thermal-label-converter">Thermal Label Converter</a>
+          </div>
+        </footer>
+      </div>
     </div>
   </body>
   </html>
@@ -830,7 +988,7 @@ app.get('/', (req, res) => {
             <div class="eyebrow">4x6 label conversion made simple</div>
             <h1>Convert shipping labels to 4x6 thermal format</h1>
             <p class="lead">
-              Upload a PDF, JPG, or PNG label and turn it into a clean thermal-printer-ready PDF in seconds.
+              Upload a PDF, JPG, or PNG label and turn it into a cleaner thermal-printer-ready PDF with preview before download.
             </p>
 
             <div class="hero-points">
@@ -839,7 +997,7 @@ app.get('/', (req, res) => {
                 <span>Made for 4x6 thermal printing instead of generic file conversion.</span>
               </div>
               <div class="hero-point">
-                <strong>Fast upload and download</strong>
+                <strong>Fast upload and review</strong>
                 <span>Simple browser-based flow with no account required in this version.</span>
               </div>
               <div class="hero-point">
@@ -919,7 +1077,7 @@ app.get('/', (req, res) => {
           <div class="step-card">
             <div class="step-number">3</div>
             <h3>Preview and download</h3>
-            <p>Review the converted PDF on screen, then download and print it on your 4x6 thermal label printer.</p>
+            <p>Review the converted PDF, then download and print it on your 4x6 thermal label printer.</p>
           </div>
         </div>
       </section>
@@ -996,7 +1154,7 @@ app.get('/faq', (req, res) => {
             </div>
             <div class="faq-item">
               <h3>Can I preview the result before downloading?</h3>
-              <p>Yes. The completion page now includes an on-screen PDF preview.</p>
+              <p>Yes. The completion page includes an on-screen PDF preview.</p>
             </div>
             <div class="faq-item">
               <h3>What does “Crop tighter to fill 4x6” do?</h3>
@@ -1448,7 +1606,8 @@ app.post('/convert', (req, res, next) => {
 
   const mode = req.body.mode || 'fit';
   const inputPath = req.file.path;
-  const ext = path.extname(req.file.originalname).toLowerCase();
+  const originalName = req.file.originalname || 'Uploaded file';
+  const ext = path.extname(originalName).toLowerCase();
   const outputName = `converted-${Date.now()}.pdf`;
   const outputPath = path.join(downloadsDir, outputName);
 
@@ -1470,12 +1629,23 @@ app.post('/convert', (req, res, next) => {
         ? 'Rotate for best fit'
         : 'Fit entire label';
 
+    const pageCount = result && result.pageCount ? result.pageCount : 1;
     const pageMessage =
-      result && result.pageCount > 1
-        ? `Your file was processed successfully using <strong>${escapeHtml(modeLabel)}</strong>. ${result.pageCount} pages were converted into one multi-page 4x6 PDF.`
+      pageCount > 1
+        ? `Your file was processed successfully using <strong>${escapeHtml(modeLabel)}</strong>. ${pageCount} pages were converted into one multi-page 4x6 PDF.`
         : `Your file was processed successfully using <strong>${escapeHtml(modeLabel)}</strong>. Download the converted PDF and print it on a 4x6 thermal label printer.`;
 
     const previewUrl = `/downloads/${encodeURIComponent(outputName)}#toolbar=0&navpanes=0&scrollbar=1`;
+    const originalUrl = `/downloads/${encodeURIComponent(path.basename(inputPath))}`;
+    const openUrl = `/downloads/${encodeURIComponent(outputName)}`;
+    const croppingWarning = mode === 'fill'
+      ? `<div class="warning-box">Fill mode can crop outer edges slightly. Review the preview carefully before printing.</div>`
+      : '';
+
+    const reportSubject = encodeURIComponent('PDF to Thermal conversion issue');
+    const reportBody = encodeURIComponent(
+      `Hi,\n\nI want to report a conversion issue.\n\nOriginal file: ${originalName}\nSelected mode: ${modeLabel}\nPage count: ${pageCount}\nWhat happened:\n\n`
+    );
 
     res.send(pageTemplate({
       title: 'Conversion Complete | PDF to Thermal',
@@ -1486,18 +1656,68 @@ app.post('/convert', (req, res, next) => {
           <div class="status success">Conversion complete</div>
           <h1>Your 4x6 PDF is ready</h1>
           <p>${pageMessage}</p>
+
           <div class="button-row">
             <a class="btn" href="/downloads/${escapeHtml(outputName)}" download>Download 4x6 PDF</a>
-            <a class="btn secondary" href="/">Convert Another File</a>
+            <a class="btn secondary" href="${escapeHtml(openUrl)}" target="_blank" rel="noopener">Open PDF in New Tab</a>
+            <a class="btn ghost" href="/">Convert Another File</a>
           </div>
 
-          <div class="preview-shell">
-            <div class="preview-card">
-              <h3>Preview your converted label</h3>
-              <p>Review the output below before downloading or printing.</p>
-              <iframe class="preview-frame" src="${escapeHtml(previewUrl)}" title="Converted PDF preview"></iframe>
-              <div class="preview-tip">
-                If your browser does not show the preview, use the download button above to open the PDF directly.
+          <div class="result-grid">
+            <div class="result-meta">
+              <div class="result-summary">
+                <h3>Conversion details</h3>
+                <div class="meta-list">
+                  <div class="meta-row">
+                    <div class="meta-key">Original file</div>
+                    <div class="meta-value">${escapeHtml(originalName)}</div>
+                  </div>
+                  <div class="meta-row">
+                    <div class="meta-key">File type</div>
+                    <div class="meta-value">${escapeHtml(ext.replace('.', '').toUpperCase())}</div>
+                  </div>
+                  <div class="meta-row">
+                    <div class="meta-key">Mode used</div>
+                    <div class="meta-value">${escapeHtml(modeLabel)}</div>
+                  </div>
+                  <div class="meta-row">
+                    <div class="meta-key">Pages converted</div>
+                    <div class="meta-value">${escapeHtml(String(pageCount))}</div>
+                  </div>
+                  <div class="meta-row">
+                    <div class="meta-key">Output</div>
+                    <div class="meta-value">4x6 PDF</div>
+                  </div>
+                </div>
+
+                ${croppingWarning}
+
+                <div class="button-row">
+                  <a class="btn secondary" href="${escapeHtml(originalUrl)}" target="_blank" rel="noopener">Open Original Upload</a>
+                  <a class="btn ghost" href="mailto:${escapeHtml(SUPPORT_EMAIL)}?subject=${reportSubject}&body=${reportBody}">Report Bad Conversion</a>
+                </div>
+              </div>
+
+              <div class="result-summary">
+                <h3>Printer tips</h3>
+                <div class="tips-list">
+                  <p>• Review the preview before printing, especially when using Fill mode.</p>
+                  <p>• Print one label first if the barcode or margins are critical.</p>
+                  <p>• If the label looks too zoomed in, retry with Fit mode.</p>
+                  <p>• If the label looks too small, retry with Fill mode.</p>
+                  <p>• If the source label is wide, Auto Rotate is often the better choice.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="preview-shell">
+              <div class="preview-card">
+                <h3>Preview your converted label</h3>
+                <p>Review the output below before downloading or printing.</p>
+                <iframe class="preview-frame" src="${escapeHtml(previewUrl)}" title="Converted PDF preview"></iframe>
+                <div class="preview-tip">
+                  If your browser does not show the preview, use the “Open PDF in New Tab” or download button above.
+                </div>
               </div>
             </div>
           </div>
@@ -1522,14 +1742,10 @@ app.post('/convert', (req, res, next) => {
       `
     }));
   } finally {
-    try {
-      if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
-    } catch (e) {
-      console.error('Cleanup error:', e.message);
-    }
+    // Keep original upload around temporarily so it can be opened from the results page.
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`PDF to Thermal running on port ${PORT}`);
+  console.log(\`PDF to Thermal running on port \${PORT}\`);
 });
