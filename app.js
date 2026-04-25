@@ -74,4 +74,45 @@ app.get('/contact', (req, res) => {
   }));
 });
 
+// Add this block to handle the file upload and conversion
+app.post('/convert', upload.single('labelFile'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).send('No file uploaded.');
+  }
+
+  const mode = req.body.mode || 'fit';
+  const inputPath = req.file.path;
+  const ext = path.extname(req.file.originalname).toLowerCase();
+  const outputName = `converted-${Date.now()}.pdf`;
+  const outputPath = path.join(downloadsDir, outputName);
+
+  try {
+    let result;
+    if (ext === '.pdf') {
+      result = await pdfTo4x6(inputPath, outputPath, mode);
+    } else if (['.png', '.jpg', '.jpeg'].includes(ext)) {
+      result = await imageToPdf(inputPath, outputPath, mode);
+    } else {
+      throw new Error('Unsupported file type.');
+    }
+
+    res.send(pageTemplate({
+      title: 'Conversion Complete',
+      content: `
+        <div class="card">
+          <h1>Success!</h1>
+          <p>Your label has been converted.</p>
+          <a href="/downloads/${outputName}" class="btn" download>Download 4x6 PDF</a>
+          <br><br>
+          <a href="/">Convert another</a>
+        </div>`
+    }));
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Conversion failed: ' + err.message);
+  } finally {
+    if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
+  }
+});
+
 app.listen(PORT, () => { console.log(`Server running on port ${PORT}`); });
