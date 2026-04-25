@@ -26,6 +26,7 @@ function cleanupOldFiles(dir, maxAgeMs = 1000 * 60 * 60) {
   try {
     const now = Date.now();
     const files = fs.readdirSync(dir);
+
     for (const file of files) {
       const filePath = path.join(dir, file);
       const stats = fs.statSync(filePath);
@@ -756,31 +757,31 @@ function renderSimplePage({ pathName, title, description, heading, bodyHtml }) {
 }
 
 function renderArticlePage(article) {
-  const articlePath = `/articles/${article.slug}`;
+  const articlePath = \`/articles/\${article.slug}\`;
   return pageTemplate({
-    title: `${article.title} | PDF to Thermal`,
+    title: \`\${article.title} | PDF to Thermal\`,
     description: article.description,
     canonicalPath: articlePath,
-    content: `
+    content: \`
       <section class="section">
         <div class="card" style="padding:28px;">
           <div class="badge-row">
-            <span class="badge">${escapeHtml(article.category)}</span>
-            <span class="badge">${escapeHtml(article.readTime)}</span>
+            <span class="badge">\${escapeHtml(article.category)}</span>
+            <span class="badge">\${escapeHtml(article.readTime)}</span>
           </div>
-          <h1 style="margin-top:14px;">${escapeHtml(article.title)}</h1>
-          <p class="lead">${escapeHtml(article.intro)}</p>
+          <h1 style="margin-top:14px;">\${escapeHtml(article.title)}</h1>
+          <p class="lead">\${escapeHtml(article.intro)}</p>
         </div>
       </section>
 
       <section class="section">
         <div class="cards-3">
-          ${article.sections.map((section) => `
+          \${article.sections.map((section) => \`
             <div class="info-card">
-              <h3>${escapeHtml(section.heading)}</h3>
-              ${section.paragraphs.map((p) => `<p style="margin-bottom:12px;">${escapeHtml(p)}</p>`).join('')}
+              <h3>\${escapeHtml(section.heading)}</h3>
+              \${section.paragraphs.map((p) => \`<p style="margin-bottom:12px;">\${escapeHtml(p)}</p>\`).join('')}
             </div>
-          `).join('')}
+          \`).join('')}
         </div>
       </section>
 
@@ -789,7 +790,7 @@ function renderArticlePage(article) {
         <p>When awkward file layouts are the real problem, a clean 4x6 conversion step usually saves more time than fighting printer settings over and over.</p>
         <a class="btn" href="/">Use PDF to Thermal</a>
       </section>
-    `
+    \`
   });
 }
 
@@ -857,80 +858,119 @@ const allArticles = articleTitles.map(([slug, title, description, category]) => 
   ]
 }));
 
-app.get('/healthz', (_req, res) => {
-  res.status(200).send('ok');
-});
-
-app.get('/robots.txt', (_req, res) => {
-  res.type('text/plain');
-  res.send(`User-agent: *
-Allow: /
-
-Sitemap: ${SITE_URL}/sitemap.xml`);
-});
-
-app.get('/sitemap.xml', (_req, res) => {
-  const urls = [
-    '/',
-    '/about',
-    '/articles',
-    '/faq',
-    '/privacy',
-    '/terms',
-    '/contact',
-    '/usps-label-to-4x6',
-    '/ups-label-to-4x6',
-    '/fedex-label-to-4x6',
-    '/amazon-return-label-to-4x6',
-    '/ebay-label-to-4x6',
-    '/etsy-label-to-4x6',
-    ...allArticles.map((article) => `/articles/${article.slug}`)
-  ];
-
-  res.type('application/xml');
-  res.send(`<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map((url) => `  <url><loc>${SITE_URL}${url === '/' ? '' : url}</loc></url>`).join('\n')}
-</urlset>`);
-});
-
-app.get('/favicon.svg', (_req, res) => {
-  res.type('image/svg+xml');
-  res.send(`
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-    <defs>
-      <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
-        <stop offset="0%" stop-color="#2563eb"/>
-        <stop offset="100%" stop-color="#60a5fa"/>
-      </linearGradient>
-    </defs>
-    <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#g)"/>
-    <text x="32" y="38" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="800" fill="#ffffff">PT</text>
-  </svg>`);
-});
-
-app.get('/articles', (_req, res) => {
+app.get('/', (_req, res) => {
   res.send(pageTemplate({
-    title: 'Articles | PDF to Thermal',
-    description: 'Guides, comparisons, and troubleshooting articles for 4x6 shipping labels and thermal printing.',
-    canonicalPath: '/articles',
+    title: 'PDF to Thermal | Convert Shipping Labels to 4x6 Thermal Format',
+    description: 'Upload a PDF, JPG, or PNG shipping label and convert it into a 4x6 thermal-printer-ready PDF.',
+    canonicalPath: '/',
     content: `
-      <section class="section">
-        <div class="card" style="padding:28px;">
-          <h1>Shipping label and thermal printing articles</h1>
-          <p class="lead">Browse practical guides, comparisons, and troubleshooting articles built around 4x6 shipping label workflows.</p>
-          <div class="badge-row">
-            <span class="badge">${allArticles.length} articles</span>
-            <span class="badge">Buyer guides</span>
-            <span class="badge">Troubleshooting</span>
-            <span class="badge">How-to workflows</span>
+      <section class="hero">
+        <div class="hero-grid">
+          <div class="hero-card hero-copy">
+            <div class="eyebrow">4x6 label conversion made simple</div>
+            <h1>Convert shipping labels to 4x6 thermal format</h1>
+            <p class="lead">
+              Upload a PDF, JPG, or PNG label and turn it into a cleaner thermal-printer-ready PDF with preview before download.
+            </p>
+
+            <div class="hero-points">
+              <div class="hero-point">
+                <strong>Built for shipping labels</strong>
+                <span>Made for 4x6 thermal printing instead of generic file conversion.</span>
+              </div>
+              <div class="hero-point">
+                <strong>Fast upload and review</strong>
+                <span>Simple browser-based flow with no account required.</span>
+              </div>
+              <div class="hero-point">
+                <strong>Multi-page PDF support</strong>
+                <span>PDF uploads convert all pages instead of stopping at page one.</span>
+              </div>
+              <div class="hero-point">
+                <strong>Preview before download</strong>
+                <span>Review the converted PDF on screen before you save or print it.</span>
+              </div>
+            </div>
+
+            <div class="trust-line">
+              Works best for common shipping workflows where you need a simple 4x6 output for a thermal label printer.
+            </div>
+          </div>
+
+          <div class="hero-card upload-card">
+            <h2>Upload your label</h2>
+            <p>
+              Choose a conversion mode based on whether you want to preserve the full label, fill the page more tightly, or auto-rotate a wide label.
+            </p>
+
+            <form action="/convert" method="POST" enctype="multipart/form-data" class="upload-box" id="uploadForm">
+              <div class="dropzone" id="dropzone">
+                <label class="main-label" for="labelFile">Select a file or drag it here</label>
+                <input id="labelFile" type="file" name="labelFile" accept=".pdf,.png,.jpg,.jpeg" required />
+                <div id="selectedFile" class="selected-file"></div>
+              </div>
+
+              <div class="mode-box">
+                <span class="mode-box-title">Conversion mode</span>
+
+                <label class="mode-option">
+                  <input type="radio" name="mode" value="fit" checked />
+                  Fit entire label
+                  <small>Keeps the full label visible and scales it to fit inside each 4x6 page.</small>
+                </label>
+
+                <label class="mode-option">
+                  <input type="radio" name="mode" value="fill" />
+                  Crop tighter to fill 4x6
+                  <small>Fills more of the page and may crop some outer edges.</small>
+                </label>
+
+                <label class="mode-option">
+                  <input type="radio" name="mode" value="autorotate" />
+                  Rotate for best fit
+                  <small>Automatically rotates wide labels when that should fit better on 4x6.</small>
+                </label>
+              </div>
+
+              <button type="submit">Upload and Convert</button>
+              <div class="microcopy">
+                Supported file types: PDF, PNG, JPG, JPEG.<br />
+                Max upload size: 15 MB.<br />
+                PDF uploads convert all pages into a multi-page 4x6 PDF.
+              </div>
+            </form>
           </div>
         </div>
       </section>
 
       <section class="section">
+        <h2 class="section-title">How it works</h2>
+        <p class="section-subtitle">
+          Upload your label, choose a conversion mode, preview the result, then download the finished PDF.
+        </p>
+        <div class="cards-3">
+          <div class="step-card">
+            <div class="step-number">1</div>
+            <h3>Upload your file</h3>
+            <p>Use a PDF, JPG, PNG, or JPEG shipping label from your computer or phone.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-number">2</div>
+            <h3>Choose your mode</h3>
+            <p>Select fit, fill, or auto-rotate depending on how you want the label placed on the page.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-number">3</div>
+            <h3>Preview and download</h3>
+            <p>Review the converted PDF, then download and print it on your 4x6 thermal label printer.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2 class="section-title">Read before you print</h2>
         <div class="article-grid">
-          ${allArticles.map((article) => `
+          ${allArticles.slice(0, 6).map((article) => `
             <article class="article-card">
               <div class="article-card-meta">
                 <span class="badge">${escapeHtml(article.category)}</span>
@@ -945,204 +985,279 @@ app.get('/articles', (_req, res) => {
           `).join('')}
         </div>
       </section>
+
+      <section class="cta">
+        <h2>Fix your shipping label in seconds</h2>
+        <p>
+          Upload your file, choose the best fit mode, preview the result, and download a cleaner PDF for your thermal printer.
+        </p>
+        <a class="btn" href="#uploadForm">Start with a label upload</a>
+      </section>
+    `,
+    bottomScript: `
+      <script>
+        (function () {
+          const fileInput = document.getElementById('labelFile');
+          const selectedFile = document.getElementById('selectedFile');
+          const dropzone = document.getElementById('dropzone');
+
+          if (!fileInput || !selectedFile || !dropzone) return;
+
+          function bytesToReadableClient(bytes) {
+            if (!bytes) return 'Unknown size';
+            const units = ['B', 'KB', 'MB', 'GB'];
+            let value = bytes;
+            let unitIndex = 0;
+            while (value >= 1024 && unitIndex < units.length - 1) {
+              value /= 1024;
+              unitIndex += 1;
+            }
+            return (value >= 10 || unitIndex === 0 ? value.toFixed(0) : value.toFixed(1)) + ' ' + units[unitIndex];
+          }
+
+          function setFileDisplay(file) {
+            if (!file) {
+              selectedFile.style.display = 'none';
+              selectedFile.innerHTML = '';
+              return;
+            }
+
+            selectedFile.style.display = 'block';
+            selectedFile.innerHTML =
+              '<strong>Selected file:</strong> ' +
+              file.name.replace(/</g, '&lt;').replace(/>/g, '&gt;') +
+              '<small>' + bytesToReadableClient(file.size) + '</small>';
+          }
+
+          fileInput.addEventListener('change', function () {
+            const file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+            setFileDisplay(file);
+          });
+
+          ['dragenter', 'dragover'].forEach((eventName) => {
+            dropzone.addEventListener(eventName, function (e) {
+              e.preventDefault();
+              e.stopPropagation();
+              dropzone.classList.add('dragover');
+            });
+          });
+
+          ['dragleave', 'drop'].forEach((eventName) => {
+            dropzone.addEventListener(eventName, function (e) {
+              e.preventDefault();
+              e.stopPropagation();
+              dropzone.classList.remove('dragover');
+            });
+          });
+
+          dropzone.addEventListener('drop', function (e) {
+            const files = e.dataTransfer && e.dataTransfer.files ? e.dataTransfer.files : null;
+            if (!files || !files.length) return;
+            fileInput.files = files;
+            setFileDisplay(files[0]);
+          });
+        })();
+      </script>
     `
   }));
 });
 
-for (const article of allArticles) {
-  app.get(`/articles/${article.slug}`, (_req, res) => {
-    res.send(renderArticlePage(article));
-  });
-}
-
-app.post('/convert', (req, res, next) => {
-  upload.single('labelFile')(req, res, function (err) {
-    if (err) {
-      return res.status(400).send(pageTemplate({
-        title: 'Upload Error | PDF to Thermal',
-        description: 'Upload error on PDF to Thermal.',
-        canonicalPath: '/',
-        content: `
-          <div class="card result-card">
-            <div class="status error">Upload error</div>
-            <h1>We could not process that upload</h1>
-            <p>${escapeHtml(err.message)}</p>
-            <div class="button-row">
-              <a class="btn" href="/">Back Home</a>
-            </div>
-          </div>
-        `
-      }));
-    }
-    next();
-  });
-}, async (req, res) => {
-  if (!req.file) {
-    return res.status(400).send(pageTemplate({
-      title: 'Upload Error | PDF to Thermal',
-      description: 'Upload error on PDF to Thermal.',
-      canonicalPath: '/',
-      content: `
-        <div class="card result-card">
-          <div class="status error">Upload error</div>
-          <h1>No file uploaded</h1>
-          <p>Please go back and choose a PDF, PNG, JPG, or JPEG file before submitting.</p>
-          <div class="button-row">
-            <a class="btn" href="/">Back Home</a>
-          </div>
+app.get('/about', (_req, res) => {
+  res.send(renderSimplePage({
+    pathName: '/about',
+    title: 'About | PDF to Thermal',
+    description: 'Learn what PDF to Thermal is built for and who it helps.',
+    heading: 'About PDF to Thermal',
+    bodyHtml: `
+      <p>PDF to Thermal is a focused 4x6 label conversion tool. It exists to solve one recurring problem: shipping labels often arrive in formats that are annoying to print on thermal label stock.</p>
+      <p>Instead of acting like a giant all-purpose file converter, PDF to Thermal is designed around shipping, returns, and seller workflows where clean 4x6 output matters.</p>
+      <div class="cards-2" style="margin-top:18px;">
+        <div class="info-card">
+          <h3>Who it helps</h3>
+          <p>Marketplace sellers, home businesses, return-heavy workflows, and anyone who wants a cleaner 4x6 print path for PDF or image labels.</p>
         </div>
-      `
-    }));
-  }
-
-  cleanupOldFiles(uploadsDir);
-  cleanupOldFiles(downloadsDir);
-
-  const mode = req.body.mode || 'fit';
-  const inputPath = req.file.path;
-  const originalName = req.file.originalname || 'Uploaded file';
-  const ext = path.extname(originalName).toLowerCase();
-  const outputName = `converted-${Date.now()}.pdf`;
-  const outputPath = path.join(downloadsDir, outputName);
-
-  try {
-    let result;
-
-    if (ext === '.pdf') {
-      result = await pdfTo4x6(inputPath, outputPath, mode);
-    } else if (ext === '.png' || ext === '.jpg' || ext === '.jpeg') {
-      result = await imageToPdf(inputPath, outputPath, mode);
-    } else {
-      throw new Error('Unsupported file type.');
-    }
-
-    const modeLabel =
-      mode === 'fill'
-        ? 'Crop tighter to fill 4x6'
-        : mode === 'autorotate'
-          ? 'Rotate for best fit'
-          : 'Fit entire label';
-
-    const pageCount = result && result.pageCount ? result.pageCount : 1;
-    const pageMessage =
-      pageCount > 1
-        ? `Your file was processed successfully using <strong>${escapeHtml(modeLabel)}</strong>. ${pageCount} pages were converted into one multi-page 4x6 PDF.`
-        : `Your file was processed successfully using <strong>${escapeHtml(modeLabel)}</strong>. Download the converted PDF and print it on a 4x6 thermal label printer.`;
-
-    const previewUrl = `/downloads/${encodeURIComponent(outputName)}#toolbar=0&navpanes=0&scrollbar=1`;
-    const originalUrl = `/uploads/${encodeURIComponent(path.basename(inputPath))}`;
-    const openUrl = `/downloads/${encodeURIComponent(outputName)}`;
-    const croppingWarning = mode === 'fill'
-      ? `<div class="warning-box">Fill mode can crop outer edges slightly. Review the preview carefully before printing.</div>`
-      : '';
-
-    const reportSubject = encodeURIComponent('PDF to Thermal conversion issue');
-    const reportBody = encodeURIComponent(
-      `Hi,\n\nI want to report a conversion issue.\n\nOriginal file: ${originalName}\nSelected mode: ${modeLabel}\nPage count: ${pageCount}\nWhat happened:\n\n`
-    );
-
-    res.send(pageTemplate({
-      title: 'Conversion Complete | PDF to Thermal',
-      description: 'File conversion complete on PDF to Thermal.',
-      canonicalPath: '/',
-      content: `
-        <div class="card result-card">
-          <div class="status success">Conversion complete</div>
-          <h1>Your 4x6 PDF is ready</h1>
-          <p>${pageMessage}</p>
-
-          <div class="button-row">
-            <a class="btn" href="/downloads/${escapeHtml(outputName)}" download>Download 4x6 PDF</a>
-            <a class="btn secondary" href="${escapeHtml(openUrl)}" target="_blank" rel="noopener">Open PDF in New Tab</a>
-            <a class="btn ghost" href="/">Convert Another File</a>
-          </div>
-
-          <div class="result-grid">
-            <div>
-              <div class="result-summary">
-                <h3>Conversion details</h3>
-                <div class="meta-list">
-                  <div class="meta-row">
-                    <div class="meta-key">Original file</div>
-                    <div class="meta-value">${escapeHtml(originalName)}</div>
-                  </div>
-                  <div class="meta-row">
-                    <div class="meta-key">File type</div>
-                    <div class="meta-value">${escapeHtml(ext.replace('.', '').toUpperCase())}</div>
-                  </div>
-                  <div class="meta-row">
-                    <div class="meta-key">Mode used</div>
-                    <div class="meta-value">${escapeHtml(modeLabel)}</div>
-                  </div>
-                  <div class="meta-row">
-                    <div class="meta-key">Pages converted</div>
-                    <div class="meta-value">${escapeHtml(String(pageCount))}</div>
-                  </div>
-                  <div class="meta-row">
-                    <div class="meta-key">Output</div>
-                    <div class="meta-value">4x6 PDF</div>
-                  </div>
-                </div>
-
-                ${croppingWarning}
-
-                <div class="button-row">
-                  <a class="btn secondary" href="${escapeHtml(originalUrl)}" target="_blank" rel="noopener">Open Original Upload</a>
-                  <a class="btn ghost" href="mailto:${escapeHtml(SUPPORT_EMAIL)}?subject=${reportSubject}&body=${reportBody}">Report Bad Conversion</a>
-                </div>
-              </div>
-            </div>
-
-            <div class="preview-card">
-              <h3>Preview your converted label</h3>
-              <p>Review the output below before downloading or printing.</p>
-              <iframe class="preview-frame" src="${escapeHtml(previewUrl)}" title="Converted PDF preview"></iframe>
-              <div class="preview-tip">
-                If your browser does not show the preview, use the “Open PDF in New Tab” or download button above.
-              </div>
-            </div>
-          </div>
-        </div>
-      `
-    }));
-  } catch (err) {
-    console.error(err);
-    res.status(500).send(pageTemplate({
-      title: 'Conversion Failed | PDF to Thermal',
-      description: 'File conversion failed on PDF to Thermal.',
-      canonicalPath: '/',
-      content: `
-        <div class="card result-card">
-          <div class="status error">Conversion failed</div>
-          <h1>Something went wrong</h1>
-          <p>${escapeHtml(err.message || 'Unknown error')}</p>
-          <div class="button-row">
-            <a class="btn" href="/">Try Again</a>
-          </div>
-        </div>
-      `
-    }));
-  } finally {
-    // keep original upload temporarily for results page access
-  }
-});
-
-app.use((req, res) => {
-  res.status(404).send(pageTemplate({
-    title: 'Page Not Found | PDF to Thermal',
-    description: 'The page you requested could not be found.',
-    canonicalPath: '/',
-    content: `
-      <div class="card not-found">
-        <div class="status error">404</div>
-        <h1>Page not found</h1>
-        <p>The page you requested does not exist or may have moved.</p>
-        <div class="button-row">
-          <a class="btn" href="/">Go Home</a>
-          <a class="btn secondary" href="/articles">Browse Articles</a>
+        <div class="info-card">
+          <h3>What it focuses on</h3>
+          <p>Fast upload, simple conversion modes, multi-page PDF support, preview before download, and fewer layout headaches before printing.</p>
         </div>
       </div>
     `
+  }));
+});
+
+app.get('/faq', (_req, res) => {
+  res.send(renderSimplePage({
+    pathName: '/faq',
+    title: 'FAQ | PDF to Thermal',
+    description: 'Frequently asked questions about PDF to Thermal.',
+    heading: 'Frequently asked questions',
+    bodyHtml: `
+      <div class="cards-2">
+        <div class="faq-item">
+          <h3>What file types can I upload?</h3>
+          <p>PDF, PNG, JPG, and JPEG are supported.</p>
+        </div>
+        <div class="faq-item">
+          <h3>What size is the output?</h3>
+          <p>The tool creates a 4x6 PDF intended for common thermal label printers.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Does it convert every page in a PDF?</h3>
+          <p>Yes. PDF uploads are converted page by page into a multi-page 4x6 PDF output.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Can I preview the result before downloading?</h3>
+          <p>Yes. The completion page includes an on-screen PDF preview.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Does Fill mode crop?</h3>
+          <p>It can. Fill mode increases page coverage and may crop outer edges slightly.</p>
+        </div>
+        <div class="faq-item">
+          <h3>What does Auto Rotate do?</h3>
+          <p>It helps wide labels fit better on a portrait 4x6 page.</p>
+        </div>
+      </div>
+    `
+  }));
+});
+
+app.get('/privacy', (_req, res) => {
+  res.send(renderSimplePage({
+    pathName: '/privacy',
+    title: 'Privacy Policy | PDF to Thermal',
+    description: 'Privacy information for PDF to Thermal.',
+    heading: 'Privacy Policy',
+    bodyHtml: `
+      <div class="cards-2">
+        <div class="info-card">
+          <h3>Uploaded files</h3>
+          <p>PDF to Thermal temporarily processes files you upload in order to generate a converted 4x6 output file.</p>
+        </div>
+        <div class="info-card">
+          <h3>Storage</h3>
+          <p>Uploaded files and generated outputs are stored for a limited period, then cleaned up automatically as part of normal site operation.</p>
+        </div>
+        <div class="info-card">
+          <h3>Sensitive documents</h3>
+          <p>Do not upload highly sensitive, confidential, or regulated documents.</p>
+        </div>
+        <div class="info-card">
+          <h3>Questions</h3>
+          <p>If you have privacy questions, contact <strong>${escapeHtml(SUPPORT_EMAIL)}</strong>.</p>
+        </div>
+      </div>
+    `
+  }));
+});
+
+app.get('/terms', (_req, res) => {
+  res.send(renderSimplePage({
+    pathName: '/terms',
+    title: 'Terms | PDF to Thermal',
+    description: 'Terms of use for PDF to Thermal.',
+    heading: 'Terms of Use',
+    bodyHtml: `
+      <div class="cards-2">
+        <div class="info-card">
+          <h3>Service basis</h3>
+          <p>PDF to Thermal is provided on an as-is, as-available basis.</p>
+        </div>
+        <div class="info-card">
+          <h3>Uploads</h3>
+          <p>You agree not to upload unlawful content, malicious files, or material you do not have the right to process.</p>
+        </div>
+        <div class="info-card">
+          <h3>Your responsibility</h3>
+          <p>You are responsible for reviewing converted output before using it for shipment or business operations.</p>
+        </div>
+        <div class="info-card">
+          <h3>Support</h3>
+          <p>Questions about these terms can be directed to <strong>${escapeHtml(SUPPORT_EMAIL)}</strong>.</p>
+        </div>
+      </div>
+    `
+  }));
+});
+
+app.get('/contact', (_req, res) => {
+  res.send(renderSimplePage({
+    pathName: '/contact',
+    title: 'Contact | PDF to Thermal',
+    description: 'Contact PDF to Thermal.',
+    heading: 'Contact',
+    bodyHtml: `
+      <div class="cards-2">
+        <div class="info-card">
+          <h3>Email</h3>
+          <p><strong>${escapeHtml(SUPPORT_EMAIL)}</strong></p>
+        </div>
+        <div class="info-card">
+          <h3>Best info to include</h3>
+          <p>Your file type, selected mode, and what happened after upload.</p>
+        </div>
+      </div>
+    `
+  }));
+});
+
+app.get('/usps-label-to-4x6', (_req, res) => {
+  res.send(renderSimplePage({
+    pathName: '/usps-label-to-4x6',
+    title: 'USPS Label to 4x6 | PDF to Thermal',
+    description: 'Convert a USPS shipping label into a 4x6 thermal-printer-ready PDF.',
+    heading: 'Convert USPS labels to 4x6',
+    bodyHtml: `<p>Use PDF to Thermal to turn USPS labels into a cleaner 4x6 PDF for thermal printing.</p>`
+  }));
+});
+
+app.get('/ups-label-to-4x6', (_req, res) => {
+  res.send(renderSimplePage({
+    pathName: '/ups-label-to-4x6',
+    title: 'UPS Label to 4x6 | PDF to Thermal',
+    description: 'Convert a UPS shipping label into a 4x6 thermal-printer-ready PDF.',
+    heading: 'Convert UPS labels to 4x6',
+    bodyHtml: `<p>UPS labels often print more cleanly when the source file is normalized to 4x6 first.</p>`
+  }));
+});
+
+app.get('/fedex-label-to-4x6', (_req, res) => {
+  res.send(renderSimplePage({
+    pathName: '/fedex-label-to-4x6',
+    title: 'FedEx Label to 4x6 | PDF to Thermal',
+    description: 'Convert a FedEx shipping label into a 4x6 thermal-printer-ready PDF.',
+    heading: 'Convert FedEx labels to 4x6',
+    bodyHtml: `<p>FedEx labels can be easier to print when the final PDF already matches the physical label stock.</p>`
+  }));
+});
+
+app.get('/amazon-return-label-to-4x6', (_req, res) => {
+  res.send(renderSimplePage({
+    pathName: '/amazon-return-label-to-4x6',
+    title: 'Amazon Return Label to 4x6 | PDF to Thermal',
+    description: 'Convert an Amazon return label into a 4x6 thermal-printer-ready PDF.',
+    heading: 'Convert Amazon return labels to 4x6',
+    bodyHtml: `<p>Amazon return labels often arrive in awkward formats. PDF to Thermal helps convert them into cleaner 4x6 output.</p>`
+  }));
+});
+
+app.get('/ebay-label-to-4x6', (_req, res) => {
+  res.send(renderSimplePage({
+    pathName: '/ebay-label-to-4x6',
+    title: 'eBay Label to 4x6 | PDF to Thermal',
+    description: 'Convert an eBay shipping label into a 4x6 thermal-printer-ready PDF.',
+    heading: 'Convert eBay labels to 4x6',
+    bodyHtml: `<p>eBay sellers can use PDF to Thermal to create a simpler 4x6 workflow for thermal printers.</p>`
+  }));
+});
+
+app.get('/etsy-label-to-4x6', (_req, res) => {
+  res.send(renderSimplePage({
+    pathName: '/etsy-label-to-4x6',
+    title: 'Etsy Label to 4x6 | PDF to Thermal',
+    description: 'Convert an Etsy shipping label into a 4x6 thermal-printer-ready PDF.',
+    heading: 'Convert Etsy labels to 4x6',
+    bodyHtml: `<p>Etsy labels can be converted into cleaner 4x6 PDFs for easier home-business printing.</p>`
   }));
 });
 
