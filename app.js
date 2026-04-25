@@ -9,11 +9,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const SITE_URL = 'https://pdftothermal.com';
 const SUPPORT_EMAIL = 'support@pdftothermal.com';
-const GA_ID = 'G-XCBKTHSF8B';
 
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
-
+// 1. Setup Folders
 const uploadsDir = path.join(__dirname, 'uploads');
 const downloadsDir = path.join(__dirname, 'downloads');
 
@@ -23,7 +20,17 @@ const downloadsDir = path.join(__dirname, 'downloads');
   }
 });
 
-// Professional Page Template
+// 2. Setup Multer (The "Upload Engine")
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadsDir),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+});
+const upload = multer({ storage: storage });
+
+app.use(express.urlencoded({ extended: true }));
+app.use('/downloads', express.static(downloadsDir));
+
+// 3. Page Template
 function pageTemplate({ title = 'PDF to Thermal', content = '' }) {
   return `
   <!DOCTYPE html>
@@ -52,7 +59,31 @@ function pageTemplate({ title = 'PDF to Thermal', content = '' }) {
   </html>`;
 }
 
-// Fixed Routes
+// 4. Conversion Logic (The "Math")
+async function imageToPdf(inputPath, outputPath) {
+  const imageBuffer = await sharp(inputPath)
+    .resize(1200, 1800, { fit: 'contain', background: { r: 255, g: 255, b: 255 } })
+    .toBuffer();
+  const pdfDoc = await PDFDocument.create();
+  const page = pdfDoc.addPage([288, 432]); // 4x6 at 72dpi
+  const embedded = await pdfDoc.embedJpg(imageBuffer);
+  page.drawImage(embedded, { x: 0, y: 0, width: 288, height: 432 });
+  const pdfBytes = await pdfDoc.save();
+  fs.writeFileSync(outputPath, pdfBytes);
+}
+
+async function pdfTo4x6(inputPath, outputPath) {
+  const existingPdfBytes = fs.readFileSync(inputPath);
+  const existingPdf = await PDFDocument.load(existingPdfBytes);
+  const newPdf = await PDFDocument.create();
+  const [copiedPage] = await newPdf.copyPages(existingPdf, [0]);
+  const page = newPdf.addPage([288, 432]);
+  page.drawPage(copiedPage, { x: 0, y: 0, xScale: 0.5, yScale: 0.5 }); // Simple scale
+  const pdfBytes = await newPdf.save();
+  fs.writeFileSync(outputPath, pdfBytes);
+}
+
+// 5. Routes
 app.get('/', (req, res) => {
   res.send(pageTemplate({
     title: 'PDF to Thermal | 4x6 Label Converter',
@@ -61,55 +92,30 @@ app.get('/', (req, res) => {
 });
 
 app.get('/faq', (req, res) => {
-  res.send(pageTemplate({
-    title: 'FAQ | PDF to Thermal',
-    content: `<div class="card"><h1>Frequently Asked Questions</h1><p><b>Supported files:</b> PDF, JPG, PNG.</p><p><b>Output size:</b> 4x6 inches for thermal printers.</p></div>`
-  }));
+  res.send(pageTemplate({ title: 'FAQ', content: `<div class="card"><h1>FAQ</h1><p>We support PDF, JPG, and PNG.</p></div>` }));
 });
 
 app.get('/contact', (req, res) => {
-  res.send(pageTemplate({
-    title: 'Contact Support | PDF to Thermal',
-    content: `<div class="card"><h1>Contact Us</h1><p>Need help? Email us at: <b>${SUPPORT_EMAIL}</b></p></div>`
-  }));
+  res.send(pageTemplate({ title: 'Contact', content: `<div class="card"><h1>Contact</h1><p>Email: ${SUPPORT_EMAIL}</p></div>` }));
 });
 
-// Add this block to handle the file upload and conversion
 app.post('/convert', upload.single('labelFile'), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).send('No file uploaded.');
-  }
-
-  const mode = req.body.mode || 'fit';
+  if (!req.file) return res.status(400).send('No file uploaded.');
   const inputPath = req.file.path;
-  const ext = path.extname(req.file.originalname).toLowerCase();
   const outputName = `converted-${Date.now()}.pdf`;
   const outputPath = path.join(downloadsDir, outputName);
 
   try {
-    let result;
-    if (ext === '.pdf') {
-      result = await pdfTo4x6(inputPath, outputPath, mode);
-    } else if (['.png', '.jpg', '.jpeg'].includes(ext)) {
-      result = await imageToPdf(inputPath, outputPath, mode);
-    } else {
-      throw new Error('Unsupported file type.');
-    }
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    if (ext === '.pdf') await pdfTo4x6(inputPath, outputPath);
+    else await imageToPdf(inputPath, outputPath);
 
     res.send(pageTemplate({
-      title: 'Conversion Complete',
-      content: `
-        <div class="card">
-          <h1>Success!</h1>
-          <p>Your label has been converted.</p>
-          <a href="/downloads/${outputName}" class="btn" download>Download 4x6 PDF</a>
-          <br><br>
-          <a href="/">Convert another</a>
-        </div>`
+      title: 'Success',
+      content: `<div class="card"><h1>Success!</h1><a href="/downloads/${outputName}" class="btn" download>Download 4x6 PDF</a></div>`
     }));
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Conversion failed: ' + err.message);
+    res.status(500).send('Error: ' + err.message);
   } finally {
     if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
   }
