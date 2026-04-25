@@ -7,6 +7,7 @@ const { PDFDocument, degrees } = require('pdf-lib');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const SITE_URL = 'https://pdftothermal.com';
 
 app.use(express.urlencoded({ extended: true }));
 
@@ -18,6 +19,27 @@ const downloadsDir = path.join(__dirname, 'downloads');
     fs.mkdirSync(dir, { recursive: true });
   }
 });
+
+function cleanupOldFiles(dir, maxAgeMs = 1000 * 60 * 60) {
+  try {
+    const now = Date.now();
+    const files = fs.readdirSync(dir);
+
+    for (const file of files) {
+      const filePath = path.join(dir, file);
+      const stats = fs.statSync(filePath);
+
+      if (stats.isFile() && now - stats.mtimeMs > maxAgeMs) {
+        fs.unlinkSync(filePath);
+      }
+    }
+  } catch (err) {
+    console.error('Cleanup sweep error:', err.message);
+  }
+}
+
+cleanupOldFiles(uploadsDir);
+cleanupOldFiles(downloadsDir);
 
 const allowedExtensions = ['.pdf', '.png', '.jpg', '.jpeg'];
 
@@ -42,14 +64,24 @@ const upload = multer({
   limits: { fileSize: 15 * 1024 * 1024 },
   fileFilter: function (req, file, cb) {
     const ext = path.extname(file.originalname).toLowerCase();
+
     if (!allowedExtensions.includes(ext)) {
       return cb(new Error('Unsupported file type. Please upload a PDF, PNG, JPG, or JPEG.'));
     }
+
     cb(null, true);
   }
 });
 
 app.use('/downloads', express.static(downloadsDir));
+
+function escapeHtml(str = '') {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
 
 function pageTemplate({
   title = 'PDF to Thermal',
@@ -57,8 +89,7 @@ function pageTemplate({
   canonicalPath = '/',
   content = ''
 }) {
-  const siteUrl = 'https://pdftothermal.com';
-  const canonicalUrl = `${siteUrl}${canonicalPath === '/' ? '' : canonicalPath}`;
+  const canonicalUrl = `${SITE_URL}${canonicalPath === '/' ? '' : canonicalPath}`;
 
   return `
   <!DOCTYPE html>
@@ -66,10 +97,16 @@ function pageTemplate({
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${title}</title>
-    <meta name="description" content="${description}" />
-    <link rel="canonical" href="${canonicalUrl}" />
+    <title>${escapeHtml(title)}</title>
+    <meta name="description" content="${escapeHtml(description)}" />
+    <link rel="canonical" href="${escapeHtml(canonicalUrl)}" />
     <meta name="robots" content="index,follow" />
+    <meta property="og:title" content="${escapeHtml(title)}" />
+    <meta property="og:description" content="${escapeHtml(description)}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="${escapeHtml(canonicalUrl)}" />
+    <meta property="og:site_name" content="PDF to Thermal" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <style>
       :root {
         --bg: #f4f7fb;
@@ -82,11 +119,15 @@ function pageTemplate({
         --accent: #eff6ff;
         --success: #166534;
         --error: #b91c1c;
+        --warning: #92400e;
+        --warning-bg: #fff7ed;
         --shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
         --radius: 18px;
       }
 
       * { box-sizing: border-box; }
+
+      html { scroll-behavior: smooth; }
 
       body {
         margin: 0;
@@ -195,6 +236,10 @@ function pageTemplate({
         letter-spacing: -0.03em;
       }
 
+      h2, h3 {
+        letter-spacing: -0.02em;
+      }
+
       .lead {
         margin: 0 0 22px;
         color: var(--muted);
@@ -232,7 +277,7 @@ function pageTemplate({
       .trust-line {
         color: var(--muted);
         font-size: 14px;
-        line-height: 1.5;
+        line-height: 1.6;
       }
 
       .upload-card {
@@ -341,7 +386,6 @@ function pageTemplate({
       .section-title {
         margin: 0 0 16px;
         font-size: 30px;
-        letter-spacing: -0.02em;
       }
 
       .section-subtitle {
@@ -358,7 +402,8 @@ function pageTemplate({
       }
 
       .step-card,
-      .info-card {
+      .info-card,
+      .mini-card {
         background: white;
         border: 1px solid var(--line);
         border-radius: 16px;
@@ -380,13 +425,15 @@ function pageTemplate({
       }
 
       .step-card h3,
-      .info-card h3 {
+      .info-card h3,
+      .mini-card h3 {
         margin: 0 0 8px;
         font-size: 19px;
       }
 
       .step-card p,
       .info-card p,
+      .mini-card p,
       .faq-item p,
       .legal p,
       .contact-list p,
@@ -414,6 +461,17 @@ function pageTemplate({
         border-radius: 14px;
         padding: 16px;
         font-weight: 700;
+      }
+
+      .warning-box {
+        margin-top: 18px;
+        padding: 14px;
+        border: 1px solid #fed7aa;
+        background: var(--warning-bg);
+        border-radius: 14px;
+        color: var(--warning);
+        line-height: 1.55;
+        font-size: 14px;
       }
 
       .cta {
@@ -530,11 +588,37 @@ function pageTemplate({
         gap: 16px;
       }
 
+      .landing-section-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+        margin-top: 14px;
+      }
+
+      .badge-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: #f8fafc;
+        border: 1px solid var(--line);
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text);
+      }
+
       @media (max-width: 920px) {
         .hero-grid,
         .cards-3,
         .cards-2,
-        .use-grid {
+        .use-grid,
+        .landing-section-grid {
           grid-template-columns: 1fr;
         }
 
@@ -583,6 +667,9 @@ function pageTemplate({
           <a href="/usps-label-to-4x6">USPS</a>
           <a href="/ups-label-to-4x6">UPS</a>
           <a href="/fedex-label-to-4x6">FedEx</a>
+          <a href="/amazon-return-label-to-4x6">Amazon Returns</a>
+          <a href="/ebay-label-to-4x6">eBay</a>
+          <a href="/etsy-label-to-4x6">Etsy</a>
         </div>
       </footer>
     </div>
@@ -597,7 +684,9 @@ function renderLandingPage({
   description,
   heading,
   intro,
-  bullets = []
+  bullets = [],
+  tips = [],
+  note = ''
 }) {
   return pageTemplate({
     title,
@@ -607,9 +696,28 @@ function renderLandingPage({
       <section class="section">
         <div class="card" style="padding: 28px;">
           <div class="landing-copy">
-            <h1>${heading}</h1>
-            <p>${intro}</p>
-            ${bullets.map((b) => `<p>• ${b}</p>`).join('')}
+            <h1>${escapeHtml(heading)}</h1>
+            <p>${escapeHtml(intro)}</p>
+
+            <div class="badge-row">
+              <span class="badge">4x6 output</span>
+              <span class="badge">PDF + image support</span>
+              <span class="badge">Fit / Fill / Rotate</span>
+            </div>
+
+            <div class="landing-section-grid">
+              <div class="mini-card">
+                <h3>When this helps</h3>
+                ${bullets.map((b) => `<p>• ${escapeHtml(b)}</p>`).join('')}
+              </div>
+              <div class="mini-card">
+                <h3>Quick tips</h3>
+                ${tips.map((t) => `<p>• ${escapeHtml(t)}</p>`).join('')}
+              </div>
+            </div>
+
+            ${note ? `<div class="warning-box">${escapeHtml(note)}</div>` : ''}
+
             <div class="button-row">
               <a class="btn" href="/">Try the converter</a>
             </div>
@@ -629,25 +737,40 @@ app.get('/robots.txt', (req, res) => {
   res.send(`User-agent: *
 Allow: /
 
-Sitemap: https://pdftothermal.com/sitemap.xml`);
+Sitemap: ${SITE_URL}/sitemap.xml`);
 });
 
 app.get('/sitemap.xml', (req, res) => {
   res.type('application/xml');
   res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://pdftothermal.com/</loc></url>
-  <url><loc>https://pdftothermal.com/faq</loc></url>
-  <url><loc>https://pdftothermal.com/privacy</loc></url>
-  <url><loc>https://pdftothermal.com/terms</loc></url>
-  <url><loc>https://pdftothermal.com/contact</loc></url>
-  <url><loc>https://pdftothermal.com/usps-label-to-4x6</loc></url>
-  <url><loc>https://pdftothermal.com/ups-label-to-4x6</loc></url>
-  <url><loc>https://pdftothermal.com/fedex-label-to-4x6</loc></url>
-  <url><loc>https://pdftothermal.com/amazon-return-label-to-4x6</loc></url>
-  <url><loc>https://pdftothermal.com/ebay-label-to-4x6</loc></url>
-  <url><loc>https://pdftothermal.com/etsy-label-to-4x6</loc></url>
+  <url><loc>${SITE_URL}/</loc></url>
+  <url><loc>${SITE_URL}/faq</loc></url>
+  <url><loc>${SITE_URL}/privacy</loc></url>
+  <url><loc>${SITE_URL}/terms</loc></url>
+  <url><loc>${SITE_URL}/contact</loc></url>
+  <url><loc>${SITE_URL}/usps-label-to-4x6</loc></url>
+  <url><loc>${SITE_URL}/ups-label-to-4x6</loc></url>
+  <url><loc>${SITE_URL}/fedex-label-to-4x6</loc></url>
+  <url><loc>${SITE_URL}/amazon-return-label-to-4x6</loc></url>
+  <url><loc>${SITE_URL}/ebay-label-to-4x6</loc></url>
+  <url><loc>${SITE_URL}/etsy-label-to-4x6</loc></url>
 </urlset>`);
+});
+
+app.get('/favicon.svg', (req, res) => {
+  res.type('image/svg+xml');
+  res.send(`
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <defs>
+      <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+        <stop offset="0%" stop-color="#2563eb"/>
+        <stop offset="100%" stop-color="#60a5fa"/>
+      </linearGradient>
+    </defs>
+    <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#g)"/>
+    <text x="32" y="38" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="800" fill="#ffffff">PT</text>
+  </svg>`);
 });
 
 app.get('/', (req, res) => {
@@ -724,7 +847,8 @@ app.get('/', (req, res) => {
               <button type="submit">Upload and Convert</button>
               <div class="microcopy">
                 Supported file types: PDF, PNG, JPG, JPEG.<br />
-                Max upload size: 15 MB.
+                Max upload size: 15 MB.<br />
+                Current version converts the first page of a PDF.
               </div>
             </form>
           </div>
@@ -831,7 +955,7 @@ app.get('/faq', (req, res) => {
             </div>
             <div class="faq-item">
               <h3>What does “Rotate for best fit” do?</h3>
-              <p>It rotates wide image labels, and attempts better placement for wide PDFs as well.</p>
+              <p>It rotates wide image labels, and attempts a better fit for wide PDFs as well.</p>
             </div>
             <div class="faq-item">
               <h3>Does it convert every page in a PDF?</h3>
@@ -854,15 +978,9 @@ app.get('/privacy', (req, res) => {
         <div class="card" style="padding: 28px;">
           <h1 class="section-title" style="margin-bottom: 10px;">Privacy Policy</h1>
           <div class="legal">
-            <p>
-              PDF to Thermal is a file-processing tool. When you upload a file, it is temporarily processed to create a converted output.
-            </p>
-            <p>
-              This early version is intended for testing and development. Before broader public launch, this page should be updated with your final retention, deletion, and usage policies.
-            </p>
-            <p>
-              Do not upload highly sensitive files until your final privacy language and storage practices are fully in place.
-            </p>
+            <p>PDF to Thermal is a file-processing tool. When you upload a file, it is temporarily processed to create a converted output.</p>
+            <p>This early version is intended for testing and development. Before broader public launch, this page should be updated with your final retention, deletion, and usage policies.</p>
+            <p>Do not upload highly sensitive files until your final privacy language and storage practices are fully in place.</p>
           </div>
         </div>
       </section>
@@ -880,15 +998,9 @@ app.get('/terms', (req, res) => {
         <div class="card" style="padding: 28px;">
           <h1 class="section-title" style="margin-bottom: 10px;">Terms of Use</h1>
           <div class="legal">
-            <p>
-              PDF to Thermal is provided as-is in this early version. Features, performance, and file-handling behavior may change as the tool improves.
-            </p>
-            <p>
-              By using the site, you agree not to upload unlawful content, malicious files, or material you do not have the right to process.
-            </p>
-            <p>
-              Before public launch, this page should be updated with complete legal terms that match your final business and hosting setup.
-            </p>
+            <p>PDF to Thermal is provided as-is in this early version. Features, performance, and file-handling behavior may change as the tool improves.</p>
+            <p>By using the site, you agree not to upload unlawful content, malicious files, or material you do not have the right to process.</p>
+            <p>Before public launch, this page should be updated with complete legal terms that match your final business and hosting setup.</p>
           </div>
         </div>
       </section>
@@ -927,7 +1039,13 @@ app.get('/usps-label-to-4x6', (req, res) => {
       'Useful when a USPS label does not line up well on a thermal printer.',
       'Supports PDF, JPG, PNG, and JPEG.',
       'Lets you choose fit, fill, or auto-rotate modes.'
-    ]
+    ],
+    tips: [
+      'Use “Fit entire label” if you want to preserve everything on the page.',
+      'Use “Fill 4x6” when the label looks too small after conversion.',
+      'Use “Rotate for best fit” when the source label is wide.'
+    ],
+    note: 'This version converts the first page of a PDF. Multi-page label handling can come later.'
   }));
 });
 
@@ -942,7 +1060,13 @@ app.get('/ups-label-to-4x6', (req, res) => {
       'Helps with awkward page sizes and image-based labels.',
       'Designed for common shipping workflows.',
       'Quick browser-based conversion.'
-    ]
+    ],
+    tips: [
+      'Start with Fit mode if you are not sure which one to use.',
+      'Try Fill mode if the label area looks too small.',
+      'Use Auto Rotate for wide source files.'
+    ],
+    note: 'Different label layouts may behave differently depending on the source PDF or image proportions.'
   }));
 });
 
@@ -957,7 +1081,13 @@ app.get('/fedex-label-to-4x6', (req, res) => {
       'Good for PDF and image-based labels.',
       'Includes fit, fill, and auto-rotate modes.',
       'Made for thermal label printing, not generic conversion.'
-    ]
+    ],
+    tips: [
+      'Use Fit mode for safest full-label output.',
+      'Use Fill mode for larger label coverage.',
+      'If the label is horizontal, try Auto Rotate first.'
+    ],
+    note: 'This tool is focused on simple 4x6 formatting rather than advanced carrier-specific editing.'
   }));
 });
 
@@ -972,7 +1102,13 @@ app.get('/amazon-return-label-to-4x6', (req, res) => {
       'Useful for return labels that arrive in awkward page layouts.',
       'Simple browser workflow.',
       'Designed for quick print-ready output.'
-    ]
+    ],
+    tips: [
+      'Fit mode is usually the best starting point.',
+      'Use Fill if the label looks too small on the final PDF.',
+      'Try Auto Rotate if the source is landscape.'
+    ],
+    note: 'Return labels can vary a lot, so test the output before using it for an actual shipment.'
   }));
 });
 
@@ -987,7 +1123,13 @@ app.get('/ebay-label-to-4x6', (req, res) => {
       'Made for seller workflows.',
       'Works with PDF and image files.',
       'Fast upload, convert, and download flow.'
-    ]
+    ],
+    tips: [
+      'Use Fit when you want everything preserved.',
+      'Try Fill for larger printed label area.',
+      'Use Auto Rotate on wide source labels.'
+    ],
+    note: 'Always preview the final PDF before printing multiple labels.'
   }));
 });
 
@@ -1002,14 +1144,20 @@ app.get('/etsy-label-to-4x6', (req, res) => {
       'Useful for home-based seller workflows.',
       'Helps avoid printer workarounds.',
       'Simple conversion options for better fit.'
-    ]
+    ],
+    tips: [
+      'Fit mode is the safest option first.',
+      'Fill mode helps if the output looks too small.',
+      'Try Auto Rotate for wide or sideways source labels.'
+    ],
+    note: 'This tool is built for speed and simplicity rather than advanced label editing.'
   }));
 });
 
 async function imageToPdf(inputPath, outputPath, mode = 'fit') {
   const metadata = await sharp(inputPath).metadata();
-  const widthPx = 1200;
-  const heightPx = 1800;
+  const pagePortrait = { width: 1200, height: 1800 };
+  const pageLandscape = { width: 1800, height: 1200 };
 
   let pipeline = sharp(inputPath);
 
@@ -1018,9 +1166,12 @@ async function imageToPdf(inputPath, outputPath, mode = 'fit') {
   }
 
   const fitMode = mode === 'fill' ? 'cover' : 'contain';
+  const target = mode === 'autorotate' && metadata.width && metadata.height && metadata.width > metadata.height
+    ? pagePortrait
+    : pagePortrait;
 
   const imageBuffer = await pipeline
-    .resize(widthPx, heightPx, {
+    .resize(target.width, target.height, {
       fit: fitMode,
       position: 'center',
       background: { r: 255, g: 255, b: 255, alpha: 1 }
@@ -1104,7 +1255,7 @@ app.post('/convert', (req, res, next) => {
           <div class="card result-card">
             <div class="status error">Upload error</div>
             <h1>We could not process that upload</h1>
-            <p>${err.message}</p>
+            <p>${escapeHtml(err.message)}</p>
             <div class="button-row">
               <a class="btn" href="/">Back Home</a>
             </div>
@@ -1132,6 +1283,9 @@ app.post('/convert', (req, res, next) => {
       `
     }));
   }
+
+  cleanupOldFiles(uploadsDir);
+  cleanupOldFiles(downloadsDir);
 
   const mode = req.body.mode || 'fit';
   const inputPath = req.file.path;
@@ -1164,10 +1318,10 @@ app.post('/convert', (req, res, next) => {
           <div class="status success">Conversion complete</div>
           <h1>Your 4x6 PDF is ready</h1>
           <p>
-            Your file was processed successfully using <strong>${modeLabel}</strong>. Download the converted PDF and print it on a 4x6 thermal label printer.
+            Your file was processed successfully using <strong>${escapeHtml(modeLabel)}</strong>. Download the converted PDF and print it on a 4x6 thermal label printer.
           </p>
           <div class="button-row">
-            <a class="btn" href="/downloads/${outputName}" download>Download 4x6 PDF</a>
+            <a class="btn" href="/downloads/${escapeHtml(outputName)}" download>Download 4x6 PDF</a>
             <a class="btn secondary" href="/">Convert Another File</a>
           </div>
         </div>
@@ -1183,7 +1337,7 @@ app.post('/convert', (req, res, next) => {
         <div class="card result-card">
           <div class="status error">Conversion failed</div>
           <h1>Something went wrong</h1>
-          <p>${err.message}</p>
+          <p>${escapeHtml(err.message || 'Unknown error')}</p>
           <div class="button-row">
             <a class="btn" href="/">Try Again</a>
           </div>
