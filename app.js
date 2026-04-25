@@ -716,6 +716,7 @@ function renderLandingPage({
               <span class="badge">4x6 output</span>
               <span class="badge">PDF + image support</span>
               <span class="badge">Fit / Fill / Rotate</span>
+              <span class="badge">Multi-page PDF support</span>
             </div>
 
             <div class="landing-section-grid">
@@ -820,8 +821,8 @@ app.get('/', (req, res) => {
                 <span>Upload PDF, PNG, JPG, or JPEG and get a print-ready PDF back.</span>
               </div>
               <div class="hero-point">
-                <strong>Useful for marketplaces</strong>
-                <span>Good for USPS, UPS, FedEx, Amazon returns, eBay, Etsy, and more.</span>
+                <strong>Multi-page PDF support</strong>
+                <span>PDF uploads now convert all pages instead of stopping at page one.</span>
               </div>
             </div>
 
@@ -846,7 +847,7 @@ app.get('/', (req, res) => {
                 <label class="mode-option">
                   <input type="radio" name="mode" value="fit" checked />
                   Fit entire label
-                  <small>Keeps the full label visible and scales it to fit inside 4x6.</small>
+                  <small>Keeps the full label visible and scales it to fit inside each 4x6 page.</small>
                 </label>
 
                 <label class="mode-option">
@@ -866,7 +867,7 @@ app.get('/', (req, res) => {
               <div class="microcopy">
                 Supported file types: PDF, PNG, JPG, JPEG.<br />
                 Max upload size: 15 MB.<br />
-                Current version converts the first page of a PDF.
+                PDF uploads now convert all pages into a multi-page 4x6 PDF.
               </div>
             </form>
           </div>
@@ -892,7 +893,7 @@ app.get('/', (req, res) => {
           <div class="step-card">
             <div class="step-number">3</div>
             <h3>Download and print</h3>
-            <p>Open the converted file and print it on your 4x6 thermal label printer.</p>
+            <p>Open the converted file and print it on your 4x6 thermal label printer. PDF uploads keep multiple pages.</p>
           </div>
         </div>
       </section>
@@ -922,9 +923,9 @@ app.get('/', (req, res) => {
             </p>
           </div>
           <div class="info-card">
-            <h3>Simple enough for repeat use</h3>
+            <h3>Handles longer PDF jobs better</h3>
             <p>
-              The goal is a practical tool you can use quickly without needing design software, printer workarounds, or extra cleanup steps.
+              PDF uploads now carry all pages through the conversion process, which makes the tool more practical for multi-page return files and stacked label PDFs.
             </p>
           </div>
         </div>
@@ -964,8 +965,12 @@ app.get('/faq', (req, res) => {
               <p>The tool creates a 4x6 PDF intended for common thermal label printers.</p>
             </div>
             <div class="faq-item">
+              <h3>Does it convert every page in a PDF now?</h3>
+              <p>Yes. PDF uploads are converted page by page into a multi-page 4x6 PDF output.</p>
+            </div>
+            <div class="faq-item">
               <h3>What does “Fit entire label” do?</h3>
-              <p>It scales the whole label down so everything stays visible within the 4x6 page.</p>
+              <p>It scales the whole label down so everything stays visible within each 4x6 page.</p>
             </div>
             <div class="faq-item">
               <h3>What does “Crop tighter to fill 4x6” do?</h3>
@@ -973,11 +978,7 @@ app.get('/faq', (req, res) => {
             </div>
             <div class="faq-item">
               <h3>What does “Rotate for best fit” do?</h3>
-              <p>It rotates wide image labels, and attempts a better fit for wide PDFs as well.</p>
-            </div>
-            <div class="faq-item">
-              <h3>Does it convert every page in a PDF?</h3>
-              <p>Not yet. This version converts the first page of a PDF.</p>
+              <p>It rotates wide image labels, and attempts a better fit for wide PDF pages as well.</p>
             </div>
           </div>
         </div>
@@ -1068,7 +1069,7 @@ app.get('/usps-label-to-4x6', (req, res) => {
       'Use “Fill 4x6” when the label looks too small after conversion.',
       'Use “Rotate for best fit” when the source label is wide.'
     ],
-    note: 'This version converts the first page of a PDF. Multi-page label handling can come later.'
+    note: 'PDF uploads can now preserve multiple pages in the converted output.'
   }));
 });
 
@@ -1194,7 +1195,7 @@ app.get('/pdf-to-4x6-label', (req, res) => {
       'Use Fill mode if the label looks too small after conversion.',
       'Use Auto Rotate if the original PDF page is wide.'
     ],
-    note: 'This version works on the first page of a PDF, so multi-page jobs should be reviewed before use.'
+    note: 'PDF uploads now convert all pages into a multi-page 4x6 output file.'
   }));
 });
 
@@ -1316,6 +1317,8 @@ async function imageToPdf(inputPath, outputPath, mode = 'fit') {
 
   const pdfBytes = await pdfDoc.save();
   fs.writeFileSync(outputPath, pdfBytes);
+
+  return { pageCount: 1 };
 }
 
 async function pdfTo4x6(inputPath, outputPath, mode = 'fit') {
@@ -1323,49 +1326,55 @@ async function pdfTo4x6(inputPath, outputPath, mode = 'fit') {
   const existingPdf = await PDFDocument.load(existingPdfBytes);
   const newPdf = await PDFDocument.create();
 
-  const [copiedPage] = await newPdf.copyPages(existingPdf, [0]);
-  const sourceWidth = copiedPage.getWidth();
-  const sourceHeight = copiedPage.getHeight();
+  const pageIndices = existingPdf.getPageIndices();
+  const copiedPages = await newPdf.copyPages(existingPdf, pageIndices);
 
-  const targetWidth = 288;
-  const targetHeight = 432;
-  const page = newPdf.addPage([targetWidth, targetHeight]);
+  for (const copiedPage of copiedPages) {
+    const sourceWidth = copiedPage.getWidth();
+    const sourceHeight = copiedPage.getHeight();
 
-  const shouldRotate = mode === 'autorotate' && sourceWidth > sourceHeight;
+    const targetWidth = 288;
+    const targetHeight = 432;
+    const page = newPdf.addPage([targetWidth, targetHeight]);
 
-  const effectiveWidth = shouldRotate ? sourceHeight : sourceWidth;
-  const effectiveHeight = shouldRotate ? sourceWidth : sourceHeight;
+    const shouldRotate = mode === 'autorotate' && sourceWidth > sourceHeight;
 
-  const scale =
-    mode === 'fill'
-      ? Math.max(targetWidth / effectiveWidth, targetHeight / effectiveHeight)
-      : Math.min(targetWidth / effectiveWidth, targetHeight / effectiveHeight);
+    const effectiveWidth = shouldRotate ? sourceHeight : sourceWidth;
+    const effectiveHeight = shouldRotate ? sourceWidth : sourceHeight;
 
-  const drawnWidth = effectiveWidth * scale;
-  const drawnHeight = effectiveHeight * scale;
+    const scale =
+      mode === 'fill'
+        ? Math.max(targetWidth / effectiveWidth, targetHeight / effectiveHeight)
+        : Math.min(targetWidth / effectiveWidth, targetHeight / effectiveHeight);
 
-  const x = (targetWidth - drawnWidth) / 2;
-  const y = (targetHeight - drawnHeight) / 2;
+    const drawnWidth = effectiveWidth * scale;
+    const drawnHeight = effectiveHeight * scale;
 
-  if (shouldRotate) {
-    page.drawPage(copiedPage, {
-      x: targetWidth - x,
-      y,
-      xScale: scale,
-      yScale: scale,
-      rotate: degrees(90)
-    });
-  } else {
-    page.drawPage(copiedPage, {
-      x,
-      y,
-      xScale: scale,
-      yScale: scale
-    });
+    const x = (targetWidth - drawnWidth) / 2;
+    const y = (targetHeight - drawnHeight) / 2;
+
+    if (shouldRotate) {
+      page.drawPage(copiedPage, {
+        x: targetWidth - x,
+        y,
+        xScale: scale,
+        yScale: scale,
+        rotate: degrees(90)
+      });
+    } else {
+      page.drawPage(copiedPage, {
+        x,
+        y,
+        xScale: scale,
+        yScale: scale
+      });
+    }
   }
 
   const pdfBytes = await newPdf.save();
   fs.writeFileSync(outputPath, pdfBytes);
+
+  return { pageCount: copiedPages.length };
 }
 
 app.post('/convert', (req, res, next) => {
@@ -1418,10 +1427,12 @@ app.post('/convert', (req, res, next) => {
   const outputPath = path.join(downloadsDir, outputName);
 
   try {
+    let result;
+
     if (ext === '.pdf') {
-      await pdfTo4x6(inputPath, outputPath, mode);
+      result = await pdfTo4x6(inputPath, outputPath, mode);
     } else if (ext === '.png' || ext === '.jpg' || ext === '.jpeg') {
-      await imageToPdf(inputPath, outputPath, mode);
+      result = await imageToPdf(inputPath, outputPath, mode);
     } else {
       throw new Error('Unsupported file type.');
     }
@@ -1433,6 +1444,11 @@ app.post('/convert', (req, res, next) => {
         ? 'Rotate for best fit'
         : 'Fit entire label';
 
+    const pageMessage =
+      result && result.pageCount > 1
+        ? `Your file was processed successfully using <strong>${escapeHtml(modeLabel)}</strong>. ${result.pageCount} pages were converted into one multi-page 4x6 PDF.`
+        : `Your file was processed successfully using <strong>${escapeHtml(modeLabel)}</strong>. Download the converted PDF and print it on a 4x6 thermal label printer.`;
+
     res.send(pageTemplate({
       title: 'Conversion Complete | PDF to Thermal',
       description: 'File conversion complete on PDF to Thermal.',
@@ -1441,9 +1457,7 @@ app.post('/convert', (req, res, next) => {
         <div class="card result-card">
           <div class="status success">Conversion complete</div>
           <h1>Your 4x6 PDF is ready</h1>
-          <p>
-            Your file was processed successfully using <strong>${escapeHtml(modeLabel)}</strong>. Download the converted PDF and print it on a 4x6 thermal label printer.
-          </p>
+          <p>${pageMessage}</p>
           <div class="button-row">
             <a class="btn" href="/downloads/${escapeHtml(outputName)}" download>Download 4x6 PDF</a>
             <a class="btn secondary" href="/">Convert Another File</a>
