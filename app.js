@@ -20,10 +20,12 @@ const TARGET_WIDTH_PIXELS = 1200; // 4 inches x 300 DPI
 const TARGET_HEIGHT_PIXELS = 1800; // 6 inches x 300 DPI
 
 // PDF render quality for smart crop
-const PDF_RENDER_DENSITY = 220;
+const PDF_RENDER_DENSITY = 240;
 
-// File cleanup age
+// File limits
 const MAX_FILE_AGE_MS = 60 * 60 * 1000;
+const MAX_UPLOAD_SIZE = 20 * 1024 * 1024;
+const MAX_PDF_PAGES = 50;
 
 // Setup directories
 const uploadsDir = path.join(__dirname, 'uploads');
@@ -37,7 +39,12 @@ const downloadsDir = path.join(__dirname, 'downloads');
 
 // Express middleware
 app.use(express.urlencoded({ extended: true }));
-app.use('/downloads', express.static(downloadsDir));
+app.use('/downloads', express.static(downloadsDir, {
+  maxAge: '1h',
+  setHeaders: (res) => {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  }
+}));
 
 // Configure Multer
 const storage = multer.diskStorage({
@@ -48,18 +55,28 @@ const storage = multer.diskStorage({
   }
 });
 
+function getInputKind(file) {
+  const ext = path.extname(file.originalname || '').toLowerCase();
+  const mime = (file.mimetype || '').toLowerCase();
+
+  if (mime === 'application/pdf' || ext === '.pdf') return 'pdf';
+  if (mime === 'image/png' || ext === '.png') return 'image';
+  if (mime === 'image/jpeg' || ext === '.jpg' || ext === '.jpeg') return 'image';
+  if (mime === 'image/webp' || ext === '.webp') return 'image';
+
+  return 'unsupported';
+}
+
 const upload = multer({
   storage,
   limits: {
-    fileSize: 15 * 1024 * 1024
+    fileSize: MAX_UPLOAD_SIZE
   },
   fileFilter: (req, file, cb) => {
-    const isPdf =
-      file.mimetype === 'application/pdf' ||
-      path.extname(file.originalname).toLowerCase() === '.pdf';
+    const kind = getInputKind(file);
 
-    if (!isPdf) {
-      return cb(new Error('Only PDF files are supported right now.'));
+    if (kind === 'unsupported') {
+      return cb(new Error('Only PDF, PNG, JPG, JPEG, and WEBP files are supported right now.'));
     }
 
     cb(null, true);
@@ -71,7 +88,7 @@ function handleUpload(req, res, next) {
     if (err) {
       const message =
         err.code === 'LIMIT_FILE_SIZE'
-          ? 'File is too large. Please upload a PDF under 15MB.'
+          ? 'File is too large. Please upload a PDF or image under 20MB.'
           : err.message || 'Upload failed. Please try again.';
 
       return res.status(400).send(
@@ -108,6 +125,25 @@ function safePath(value) {
   const clean = String(value || '/');
   if (!clean.startsWith('/')) return '/';
   return clean.replace(/[^a-zA-Z0-9/_\-?.=&]/g, '');
+}
+
+function safeMode(value) {
+  const allowedModes = ['smart', 'fit', 'fill', 'autorotate', 'rotate90', 'split2', 'split4'];
+  return allowedModes.includes(value) ? value : 'smart';
+}
+
+function modeLabel(mode) {
+  const labels = {
+    smart: 'Smart Crop',
+    fit: 'Fit',
+    fill: 'Fill',
+    autorotate: 'Auto-Rotate',
+    rotate90: 'Rotate 90°',
+    split2: 'Split Sheet: 2 Labels',
+    split4: 'Split Sheet: 4 Labels'
+  };
+
+  return labels[mode] || 'Smart Crop';
 }
 
 // Clean up old files
@@ -167,7 +203,7 @@ function analyticsScript() {
 function pageTemplate({ title, description, content, canonicalPath = '/' }) {
   const metaDescription =
     description ||
-    'Free tool to resize shipping labels into clean 4x6 thermal printer PDFs for Etsy, eBay, Amazon, TikTok Shop, Shopify, USPS, UPS, FedEx, and other marketplaces.';
+    'Free tool to resize shipping labels into clean 4x6 thermal printer PDFs for Etsy, eBay, Amazon, TikTok Shop, Shopify, USPS, UPS, FedEx, PNG, JPG, and marketplace labels.';
 
   const cleanCanonical = safePath(canonicalPath);
 
@@ -215,7 +251,7 @@ ${googleTag()}
     }
 
     .container {
-      max-width: 1040px;
+      max-width: 1080px;
       margin: 0 auto;
       padding: 0 20px;
     }
@@ -274,7 +310,7 @@ ${googleTag()}
     }
 
     .hero p {
-      max-width: 720px;
+      max-width: 760px;
       margin-left: auto;
       margin-right: auto;
     }
@@ -321,12 +357,12 @@ ${googleTag()}
 
     .btn.full {
       width: 100%;
-      max-width: 420px;
+      max-width: 460px;
     }
 
     .preview-frame {
       width: 100%;
-      height: 540px;
+      height: 560px;
       border: 1px solid var(--border);
       border-radius: 14px;
       margin: 20px 0;
@@ -396,7 +432,7 @@ ${googleTag()}
 
     input[type="file"] {
       width: 100%;
-      max-width: 480px;
+      max-width: 520px;
       padding: 14px;
       border: 1px dashed #cbd5e1;
       border-radius: 14px;
@@ -418,6 +454,7 @@ ${googleTag()}
       padding: 14px;
       background: #ffffff;
       cursor: pointer;
+      min-height: 126px;
     }
 
     .mode-card:hover {
@@ -490,6 +527,24 @@ ${googleTag()}
       margin-bottom: 8px;
     }
 
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 16px;
+    }
+
+    .pill {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 7px 12px;
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 13px;
+    }
+
     footer {
       background: var(--dark);
       color: #ffffff;
@@ -507,7 +562,13 @@ ${googleTag()}
       color: #ffffff;
     }
 
-    @media (max-width: 800px) {
+    @media (max-width: 900px) {
+      .mode-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 760px) {
       .header-inner {
         flex-direction: column;
         align-items: flex-start;
@@ -545,9 +606,10 @@ ${analyticsScript()}
       <a href="/" class="logo">PDF to Thermal</a>
       <nav>
         <a href="/">Converter</a>
+        <a href="/split-label-sheet">Split Sheets</a>
+        <a href="/image-to-4x6">Image to 4x6</a>
         <a href="/best-thermal-printers">Best Printers</a>
         <a href="/faq">FAQ</a>
-        <a href="/privacy">Privacy</a>
       </nav>
     </div>
   </header>
@@ -571,7 +633,7 @@ ${analyticsScript()}
   `;
 }
 
-// Detect the actual non-white area of a rendered PDF page
+// Detect actual non-white area of a rendered page or image
 async function detectContentBounds(imageBuffer) {
   const image = sharp(imageBuffer).ensureAlpha();
   const metadata = await image.metadata();
@@ -580,7 +642,7 @@ async function detectContentBounds(imageBuffer) {
   const height = metadata.height;
 
   if (!width || !height) {
-    throw new Error('Could not read rendered page dimensions.');
+    throw new Error('Could not read image dimensions.');
   }
 
   const raw = await image.raw().toBuffer();
@@ -589,12 +651,10 @@ async function detectContentBounds(imageBuffer) {
   let minY = height;
   let maxX = -1;
   let maxY = -1;
+  let contentPixels = 0;
 
-  // White detection threshold.
-  // Anything darker than this is treated as label/content.
   const whiteThreshold = 246;
 
-  // Ignore tiny single-pixel dust by scanning every pixel but requiring contrast.
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
       const idx = (y * width + x) * 4;
@@ -608,6 +668,7 @@ async function detectContentBounds(imageBuffer) {
       const isWhite = r >= whiteThreshold && g >= whiteThreshold && b >= whiteThreshold;
 
       if (!isWhite) {
+        contentPixels += 1;
         if (x < minX) minX = x;
         if (y < minY) minY = y;
         if (x > maxX) maxX = x;
@@ -616,17 +677,18 @@ async function detectContentBounds(imageBuffer) {
     }
   }
 
-  // If no meaningful content is detected, return the whole page.
   if (maxX === -1 || maxY === -1) {
     return {
+      found: false,
       left: 0,
       top: 0,
       width,
-      height
+      height,
+      contentPixels: 0,
+      contentRatio: 0
     };
   }
 
-  // Add padding back so barcodes/text are not cut too tight.
   const padding = Math.max(12, Math.round(Math.min(width, height) * 0.012));
 
   const left = Math.max(0, minX - padding);
@@ -635,64 +697,70 @@ async function detectContentBounds(imageBuffer) {
   const bottom = Math.min(height - 1, maxY + padding);
 
   return {
+    found: true,
     left,
     top,
     width: right - left + 1,
-    height: bottom - top + 1
+    height: bottom - top + 1,
+    contentPixels,
+    contentRatio: contentPixels / (width * height)
   };
 }
 
-// Prepare one rendered page image into a 4x6 PNG
-async function preparePageImage(renderedPageBuffer, mode) {
-  let working = sharp(renderedPageBuffer).flatten({ background: '#ffffff' });
+async function isMeaningfulRegion(imageBuffer) {
+  const bounds = await detectContentBounds(imageBuffer);
+  return bounds.found && bounds.contentPixels > 900 && bounds.contentRatio > 0.0004;
+}
+
+// Prepare one page or image into a 4x6 PNG
+async function prepareImageForLabel(imageBuffer, mode) {
+  const selectedMode = safeMode(mode);
+  let working = sharp(imageBuffer).rotate().flatten({ background: '#ffffff' });
 
   const metadata = await working.metadata();
 
   if (!metadata.width || !metadata.height) {
-    throw new Error('Could not process page image.');
+    throw new Error('Could not process image.');
   }
 
-  if (mode === 'smart') {
-    const bounds = await detectContentBounds(renderedPageBuffer);
+  if (selectedMode === 'smart') {
+    const bounds = await detectContentBounds(await working.png().toBuffer());
 
-    // Only crop if detected area is meaningfully smaller than the full page.
     const fullArea = metadata.width * metadata.height;
     const cropArea = bounds.width * bounds.height;
-    const shouldCrop = cropArea < fullArea * 0.96;
+    const shouldCrop = bounds.found && cropArea < fullArea * 0.96;
 
     if (shouldCrop) {
-      working = working.extract(bounds);
+      working = working.extract({
+        left: bounds.left,
+        top: bounds.top,
+        width: bounds.width,
+        height: bounds.height
+      });
     }
   }
 
-  const afterCropMeta = await working.metadata();
-  let cropWidth = afterCropMeta.width;
-  let cropHeight = afterCropMeta.height;
-
-  if (!cropWidth || !cropHeight) {
-    throw new Error('Could not read cropped page size.');
-  }
-
-  const isLandscape = cropWidth > cropHeight;
-  const shouldRotate =
-    mode === 'autorotate'
-      ? isLandscape
-      : mode === 'smart'
-        ? isLandscape
-        : mode === 'fill'
-          ? isLandscape
-          : false;
-
-  if (shouldRotate) {
+  if (selectedMode === 'rotate90') {
     working = working.rotate(90);
-    const rotatedMeta = await working.metadata();
-    cropWidth = rotatedMeta.width;
-    cropHeight = rotatedMeta.height;
+  } else {
+    const afterCropMeta = await working.metadata();
+    const cropWidth = afterCropMeta.width;
+    const cropHeight = afterCropMeta.height;
+    const isLandscape = cropWidth > cropHeight;
+
+    const shouldAutoRotate =
+      (selectedMode === 'smart' && isLandscape) ||
+      (selectedMode === 'autorotate' && isLandscape) ||
+      (selectedMode === 'fill' && isLandscape);
+
+    if (shouldAutoRotate) {
+      working = working.rotate(90);
+    }
   }
 
-  const resizeFit = mode === 'fill' ? 'cover' : 'contain';
+  const resizeFit = selectedMode === 'fill' ? 'cover' : 'contain';
 
-  const finalPng = await working
+  return working
     .resize({
       width: TARGET_WIDTH_PIXELS,
       height: TARGET_HEIGHT_PIXELS,
@@ -705,49 +773,70 @@ async function preparePageImage(renderedPageBuffer, mode) {
       adaptiveFiltering: true
     })
     .toBuffer();
-
-  return finalPng;
 }
 
-// Convert PDF to smart-cropped 4x6 PDF
-async function processPdf(inputPath, outputPath, mode = 'smart') {
-  const allowedModes = ['smart', 'fit', 'fill', 'autorotate'];
-  const selectedMode = allowedModes.includes(mode) ? mode : 'smart';
+async function prepareSplitPieces(renderedPageBuffer, splitMode) {
+  const base = sharp(renderedPageBuffer).flatten({ background: '#ffffff' });
+  const metadata = await base.metadata();
+  const width = metadata.width;
+  const height = metadata.height;
 
-  const existingPdfBytes = fs.readFileSync(inputPath);
-  const existingPdf = await PDFDocument.load(existingPdfBytes);
-  const pageCount = existingPdf.getPageCount();
-
-  if (!pageCount) {
-    throw new Error('This PDF does not appear to contain any pages.');
+  if (!width || !height) {
+    throw new Error('Could not split this page.');
   }
 
-  if (pageCount > 50) {
-    throw new Error('This PDF has too many pages. Please upload a PDF with 50 pages or fewer.');
+  let regions = [];
+
+  if (splitMode === 'split2') {
+    const halfHeight = Math.floor(height / 2);
+    regions = [
+      { left: 0, top: 0, width, height: halfHeight, name: 'top' },
+      { left: 0, top: halfHeight, width, height: height - halfHeight, name: 'bottom' }
+    ];
+  }
+
+  if (splitMode === 'split4') {
+    const halfWidth = Math.floor(width / 2);
+    const halfHeight = Math.floor(height / 2);
+    regions = [
+      { left: 0, top: 0, width: halfWidth, height: halfHeight, name: 'top-left' },
+      { left: halfWidth, top: 0, width: width - halfWidth, height: halfHeight, name: 'top-right' },
+      { left: 0, top: halfHeight, width: halfWidth, height: height - halfHeight, name: 'bottom-left' },
+      { left: halfWidth, top: halfHeight, width: width - halfWidth, height: height - halfHeight, name: 'bottom-right' }
+    ];
+  }
+
+  const pieces = [];
+
+  for (const region of regions) {
+    const pieceBuffer = await base
+      .clone()
+      .extract({
+        left: region.left,
+        top: region.top,
+        width: region.width,
+        height: region.height
+      })
+      .png()
+      .toBuffer();
+
+    if (await isMeaningfulRegion(pieceBuffer)) {
+      pieces.push(await prepareImageForLabel(pieceBuffer, 'smart'));
+    }
+  }
+
+  return pieces;
+}
+
+async function buildPdfFromPngPages(pngPages, outputPath) {
+  if (!pngPages.length) {
+    throw new Error('No usable label pages were detected.');
   }
 
   const newPdf = await PDFDocument.create();
 
-  for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
-    let renderedPageBuffer;
-
-    try {
-      renderedPageBuffer = await sharp(inputPath, {
-        density: PDF_RENDER_DENSITY,
-        page: pageIndex
-      })
-        .flatten({ background: '#ffffff' })
-        .png()
-        .toBuffer();
-    } catch (err) {
-      throw new Error(
-        'PDF rendering failed. Make sure this is a valid PDF label file. Details: ' + err.message
-      );
-    }
-
-    const preparedPng = await preparePageImage(renderedPageBuffer, selectedMode);
-    const embeddedImage = await newPdf.embedPng(preparedPng);
-
+  for (const pngBuffer of pngPages) {
+    const embeddedImage = await newPdf.embedPng(pngBuffer);
     const page = newPdf.addPage([TARGET_WIDTH_POINTS, TARGET_HEIGHT_POINTS]);
 
     page.drawImage(embeddedImage, {
@@ -762,6 +851,158 @@ async function processPdf(inputPath, outputPath, mode = 'smart') {
   fs.writeFileSync(outputPath, newPdfBytes);
 }
 
+async function renderPdfPage(inputPath, pageIndex) {
+  return sharp(inputPath, {
+    density: PDF_RENDER_DENSITY,
+    page: pageIndex
+  })
+    .flatten({ background: '#ffffff' })
+    .png()
+    .toBuffer();
+}
+
+async function processPdfFile(inputPath, outputPath, mode) {
+  const selectedMode = safeMode(mode);
+  const existingPdfBytes = fs.readFileSync(inputPath);
+  const existingPdf = await PDFDocument.load(existingPdfBytes);
+  const pageCount = existingPdf.getPageCount();
+
+  if (!pageCount) {
+    throw new Error('This PDF does not appear to contain any pages.');
+  }
+
+  if (pageCount > MAX_PDF_PAGES) {
+    throw new Error(`This PDF has too many pages. Please upload a PDF with ${MAX_PDF_PAGES} pages or fewer.`);
+  }
+
+  const outputPngPages = [];
+
+  for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
+    let renderedPageBuffer;
+
+    try {
+      renderedPageBuffer = await renderPdfPage(inputPath, pageIndex);
+    } catch (err) {
+      throw new Error('PDF rendering failed. Make sure this is a valid PDF label file. Details: ' + err.message);
+    }
+
+    if (selectedMode === 'split2' || selectedMode === 'split4') {
+      const pieces = await prepareSplitPieces(renderedPageBuffer, selectedMode);
+
+      if (pieces.length) {
+        outputPngPages.push(...pieces);
+      } else {
+        outputPngPages.push(await prepareImageForLabel(renderedPageBuffer, 'smart'));
+      }
+    } else {
+      outputPngPages.push(await prepareImageForLabel(renderedPageBuffer, selectedMode));
+    }
+  }
+
+  await buildPdfFromPngPages(outputPngPages, outputPath);
+
+  return {
+    inputPages: pageCount,
+    outputPages: outputPngPages.length
+  };
+}
+
+async function processImageFile(inputPath, outputPath, mode) {
+  const selectedMode = safeMode(mode);
+  const imageBuffer = await sharp(inputPath)
+    .rotate()
+    .flatten({ background: '#ffffff' })
+    .png()
+    .toBuffer();
+
+  const outputPngPages = [];
+
+  if (selectedMode === 'split2' || selectedMode === 'split4') {
+    const pieces = await prepareSplitPieces(imageBuffer, selectedMode);
+
+    if (pieces.length) {
+      outputPngPages.push(...pieces);
+    } else {
+      outputPngPages.push(await prepareImageForLabel(imageBuffer, 'smart'));
+    }
+  } else {
+    outputPngPages.push(await prepareImageForLabel(imageBuffer, selectedMode));
+  }
+
+  await buildPdfFromPngPages(outputPngPages, outputPath);
+
+  return {
+    inputPages: 1,
+    outputPages: outputPngPages.length
+  };
+}
+
+async function processUploadedFile(inputPath, outputPath, fileKind, mode) {
+  if (fileKind === 'pdf') {
+    return processPdfFile(inputPath, outputPath, mode);
+  }
+
+  if (fileKind === 'image') {
+    return processImageFile(inputPath, outputPath, mode);
+  }
+
+  throw new Error('Unsupported file type.');
+}
+
+function converterForm() {
+  return `
+    <form class="upload-box" action="/convert" method="POST" enctype="multipart/form-data" onsubmit="trackEvent('upload_started', { tool: 'pdf_to_thermal' });">
+      <input type="file" name="labelFile" accept="application/pdf,image/png,image/jpeg,image/webp,.pdf,.png,.jpg,.jpeg,.webp" required />
+
+      <div class="mode-grid">
+        <label class="mode-card">
+          <input type="radio" name="mode" value="smart" checked />
+          <span class="mode-title">Smart Crop</span>
+          <span class="mode-help">Best default. Finds label content, removes blank space, and auto-rotates.</span>
+        </label>
+
+        <label class="mode-card">
+          <input type="radio" name="mode" value="fit" />
+          <span class="mode-title">Fit</span>
+          <span class="mode-help">Safest. Keeps the whole page or image visible inside 4x6.</span>
+        </label>
+
+        <label class="mode-card">
+          <input type="radio" name="mode" value="fill" />
+          <span class="mode-title">Fill</span>
+          <span class="mode-help">Fills the entire 4x6 label. May crop edges.</span>
+        </label>
+
+        <label class="mode-card">
+          <input type="radio" name="mode" value="autorotate" />
+          <span class="mode-title">Auto-Rotate</span>
+          <span class="mode-help">Keeps content visible but rotates landscape labels.</span>
+        </label>
+
+        <label class="mode-card">
+          <input type="radio" name="mode" value="rotate90" />
+          <span class="mode-title">Rotate 90°</span>
+          <span class="mode-help">Manual rescue option for labels facing the wrong direction.</span>
+        </label>
+
+        <label class="mode-card">
+          <input type="radio" name="mode" value="split2" />
+          <span class="mode-title">Split 2 Labels</span>
+          <span class="mode-help">Splits an 8.5x11 sheet into top and bottom label sections.</span>
+        </label>
+
+        <label class="mode-card">
+          <input type="radio" name="mode" value="split4" />
+          <span class="mode-title">Split 4 Labels</span>
+          <span class="mode-help">Splits a sheet into four sections and converts non-blank labels.</span>
+        </label>
+      </div>
+
+      <button type="submit" class="btn full">Convert Now</button>
+    </form>
+  `;
+}
+
 // Home route
 app.get('/', (req, res) => {
   res.send(
@@ -769,49 +1010,25 @@ app.get('/', (req, res) => {
       title: 'Convert Shipping Labels to 4x6',
       canonicalPath: '/',
       description:
-        'Free smart crop tool to convert shipping label PDFs into clean 4x6 thermal printer labels for Etsy, eBay, Amazon, TikTok Shop, Shopify, USPS, UPS, FedEx, and more.',
+        'Free smart crop tool to convert PDF, PNG, JPG, and WEBP shipping labels into clean 4x6 thermal printer PDFs.',
       content: `
         <section class="hero">
           <h1>Smart Crop Shipping Labels to 4x6</h1>
-          <p class="muted">Upload a label PDF and turn it into a clean 4x6 thermal-printer-ready file. Built for Etsy, eBay, Amazon, TikTok Shop, Shopify, USPS, UPS, FedEx, and marketplace sellers.</p>
+          <p class="muted">Upload a PDF, PNG, JPG, JPEG, or WEBP label and turn it into a clean 4x6 thermal-printer-ready PDF. Built for Etsy, eBay, Amazon, TikTok Shop, Shopify, USPS, UPS, FedEx, and marketplace sellers.</p>
+          <div class="pill-row">
+            <span class="pill">PDF</span>
+            <span class="pill">PNG</span>
+            <span class="pill">JPG</span>
+            <span class="pill">WEBP</span>
+            <span class="pill">Smart Crop</span>
+            <span class="pill">Split Sheets</span>
+          </div>
         </section>
 
         <div class="card" style="text-align:center;">
-          <h2>Upload Your Label PDF</h2>
+          <h2>Upload Your Label</h2>
           <p>Default mode uses Smart Crop to find the actual label, remove blank space, rotate when needed, and rebuild a clean 4x6 PDF.</p>
-
-          <form class="upload-box" action="/convert" method="POST" enctype="multipart/form-data" onsubmit="trackEvent('upload_started', { tool: 'pdf_to_thermal' });">
-            <input type="file" name="labelFile" accept="application/pdf,.pdf" required />
-
-            <div class="mode-grid">
-              <label class="mode-card">
-                <input type="radio" name="mode" value="smart" checked />
-                <span class="mode-title">Smart Crop</span>
-                <span class="mode-help">Best default. Finds label content, removes blank space, and auto-rotates.</span>
-              </label>
-
-              <label class="mode-card">
-                <input type="radio" name="mode" value="fit" />
-                <span class="mode-title">Fit</span>
-                <span class="mode-help">Safest. Keeps the whole page visible inside 4x6.</span>
-              </label>
-
-              <label class="mode-card">
-                <input type="radio" name="mode" value="fill" />
-                <span class="mode-title">Fill</span>
-                <span class="mode-help">Fills the entire 4x6 label. May crop edges.</span>
-              </label>
-
-              <label class="mode-card">
-                <input type="radio" name="mode" value="autorotate" />
-                <span class="mode-title">Auto-Rotate</span>
-                <span class="mode-help">Keeps page visible but rotates landscape labels.</span>
-              </label>
-            </div>
-
-            <button type="submit" class="btn full">Convert Now</button>
-          </form>
-
+          ${converterForm()}
           <div class="success-box">
             <strong>Privacy:</strong> Uploaded and converted files are temporary and automatically deleted.
           </div>
@@ -819,16 +1036,16 @@ app.get('/', (req, res) => {
 
         <div class="feature-grid">
           <div class="feature">
+            <strong>PDF + Image Uploads</strong>
+            <span class="muted">Convert PDFs, screenshots, PNGs, JPGs, JPEGs, and WEBP files.</span>
+          </div>
+          <div class="feature">
             <strong>Smart Crop</strong>
-            <span class="muted">Removes the blank 8.5x11 page area around your label.</span>
+            <span class="muted">Removes blank page space around your label.</span>
           </div>
           <div class="feature">
-            <strong>Auto-Rotate</strong>
-            <span class="muted">Fixes sideways and landscape label layouts.</span>
-          </div>
-          <div class="feature">
-            <strong>Multi-Page PDF</strong>
-            <span class="muted">Converts every label page into 4x6 format.</span>
+            <strong>Split Sheets</strong>
+            <span class="muted">Pull labels from 2-up and 4-up sheet layouts.</span>
           </div>
         </div>
 
@@ -837,6 +1054,8 @@ app.get('/', (req, res) => {
           <a href="/ebay-standard-envelope">eBay Standard Envelope to 4x6</a>
           <a href="/tiktok-shop-fix">TikTok Shop label resizing</a>
           <a href="/amazon-fnsku-resize">Amazon FNSKU to thermal label</a>
+          <a href="/image-to-4x6">Convert image labels to 4x6 PDF</a>
+          <a href="/split-label-sheet">Split 8.5x11 label sheets</a>
         </div>
       `
     })
@@ -854,7 +1073,7 @@ app.post('/convert', handleUpload, async (req, res) => {
         content: `
           <div class="card">
             <h1>No File Uploaded</h1>
-            <p>Please upload a PDF shipping label and try again.</p>
+            <p>Please upload a PDF or image shipping label and try again.</p>
             <a href="/" class="btn">Try Again</a>
           </div>
         `
@@ -864,12 +1083,13 @@ app.post('/convert', handleUpload, async (req, res) => {
 
   cleanup();
 
-  const mode = req.body.mode || 'smart';
+  const selectedMode = safeMode(req.body.mode || 'smart');
+  const fileKind = getInputKind(req.file);
   const outName = `converted-${Date.now()}.pdf`;
   const outPath = path.join(downloadsDir, outName);
 
   try {
-    await processPdf(req.file.path, outPath, mode);
+    const result = await processUploadedFile(req.file.path, outPath, fileKind, selectedMode);
 
     res.send(
       pageTemplate({
@@ -884,7 +1104,7 @@ app.post('/convert', handleUpload, async (req, res) => {
             <iframe class="preview-frame" src="/downloads/${outName}"></iframe>
 
             <div class="social-row">
-              <a href="/downloads/${outName}" class="btn" download onclick="trackEvent('download_clicked', { mode: '${escapeHtml(mode)}' });">Download PDF</a>
+              <a href="/downloads/${outName}" class="btn" download onclick="trackEvent('download_clicked', { mode: ${JSON.stringify(selectedMode)}, file_type: ${JSON.stringify(fileKind)} });">Download PDF</a>
               <a href="/" class="btn secondary">Convert Another</a>
               <button onclick="navigator.clipboard.writeText('${SITE_URL}'); trackEvent('share_link_copied'); alert('Link copied!')" class="btn secondary">
                 Copy Link to Share
@@ -892,8 +1112,8 @@ app.post('/convert', handleUpload, async (req, res) => {
             </div>
 
             <div class="success-box">
-              <strong>Converted with ${escapeHtml(mode)} mode.</strong>
-              <p style="margin-bottom:0;">If the output looks too zoomed in, try Fit mode. If it has too much white space, try Fill or Smart Crop.</p>
+              <strong>Converted with ${escapeHtml(modeLabel(selectedMode))} mode.</strong>
+              <p style="margin-bottom:0;">Input pages: ${escapeHtml(result.inputPages)}. Output 4x6 pages: ${escapeHtml(result.outputPages)}. If the output looks too zoomed in, try Fit mode. If it has too much white space, try Smart Crop or Fill.</p>
             </div>
 
             <div class="money-box">
@@ -902,7 +1122,7 @@ app.post('/convert', handleUpload, async (req, res) => {
             </div>
 
             <script>
-              trackEvent('convert_success', { mode: '${escapeHtml(mode)}' });
+              trackEvent('convert_success', { mode: ${JSON.stringify(selectedMode)}, file_type: ${JSON.stringify(fileKind)}, output_pages: ${JSON.stringify(result.outputPages)} });
             </script>
           </div>
         `
@@ -922,11 +1142,11 @@ app.post('/convert', handleUpload, async (req, res) => {
             <div class="danger-box">
               <p>${escapeHtml(err.message)}</p>
             </div>
-            <p>Try Fit mode first. If that does not work, confirm your file is a standard PDF shipping label.</p>
+            <p>Try Fit mode first. If that does not work, confirm your file is a standard PDF, PNG, JPG, JPEG, or WEBP label.</p>
             <a href="/" class="btn">Try Again</a>
 
             <script>
-              trackEvent('convert_failed', { reason: ${JSON.stringify(err.message)} });
+              trackEvent('convert_failed', { mode: ${JSON.stringify(selectedMode)}, file_type: ${JSON.stringify(fileKind)}, reason: ${JSON.stringify(err.message)} });
             </script>
           </div>
         `
@@ -1060,6 +1280,59 @@ app.get('/amazon-fnsku-resize', (req, res) => {
   );
 });
 
+app.get('/image-to-4x6', (req, res) => {
+  res.send(
+    pageTemplate({
+      title: 'Convert PNG or JPG Label to 4x6 PDF',
+      canonicalPath: '/image-to-4x6',
+      description:
+        'Convert PNG, JPG, JPEG, or WEBP shipping label screenshots into clean 4x6 thermal printer PDF files.',
+      content: `
+        <div class="card">
+          <h1>Convert PNG or JPG Labels to 4x6 PDF</h1>
+          <p>Have a screenshot or downloaded image label instead of a PDF? Upload your PNG, JPG, JPEG, or WEBP file and convert it into a 4x6 thermal-printer-ready PDF.</p>
+
+          <h2>Best Uses</h2>
+          <ul>
+            <li>Screenshot labels</li>
+            <li>Mobile app label downloads</li>
+            <li>PNG and JPG shipping labels</li>
+            <li>Marketplace labels saved as images</li>
+          </ul>
+
+          ${converterForm()}
+        </div>
+      `
+    })
+  );
+});
+
+app.get('/split-label-sheet', (req, res) => {
+  res.send(
+    pageTemplate({
+      title: 'Split 8.5x11 Label Sheets into 4x6 Labels',
+      canonicalPath: '/split-label-sheet',
+      description:
+        'Split 8.5x11 PDF label sheets into separate 4x6 thermal printer label PDFs using 2-label or 4-label split modes.',
+      content: `
+        <div class="card">
+          <h1>Split 8.5x11 Label Sheets into 4x6 Labels</h1>
+          <p>Some marketplaces download labels as full-page sheets with multiple labels. Use Split 2 Labels or Split 4 Labels mode to pull the non-blank label sections and convert each one into its own 4x6 page.</p>
+
+          <h2>Which Split Mode Should You Use?</h2>
+          <ul>
+            <li><strong>Split 2 Labels:</strong> best for top-and-bottom label sheets.</li>
+            <li><strong>Split 4 Labels:</strong> best for sheets with four label blocks or smaller barcode labels.</li>
+            <li><strong>Smart Crop:</strong> best when there is only one label on the page.</li>
+          </ul>
+
+          ${converterForm()}
+        </div>
+      `
+    })
+  );
+});
+
 // Affiliate guide route
 app.get('/best-thermal-printers', (req, res) => {
   res.send(
@@ -1107,22 +1380,25 @@ app.get('/faq', (req, res) => {
           <h1>FAQ</h1>
 
           <h2>What file types do you support?</h2>
-          <p>We currently support PDF label files. PNG and JPG upload support is planned for the next upgrade.</p>
+          <p>We support PDF, PNG, JPG, JPEG, and WEBP label files.</p>
 
           <h2>What does Smart Crop do?</h2>
-          <p>Smart Crop renders the PDF page, detects the non-white label area, removes extra blank space, rotates landscape labels when needed, and rebuilds the result as a clean 4x6 PDF.</p>
+          <p>Smart Crop detects the non-white label area, removes extra blank space, rotates landscape labels when needed, and rebuilds the result as a clean 4x6 PDF.</p>
 
-          <h2>Does this work for Etsy?</h2>
-          <p>Yes. This tool is built to help resize Etsy shipping labels into a 4x6 thermal printer format.</p>
+          <h2>What does Split 2 Labels do?</h2>
+          <p>Split 2 Labels divides each page into a top half and bottom half, detects non-blank sections, and converts each detected label into a separate 4x6 page.</p>
 
-          <h2>Does this work for eBay?</h2>
-          <p>Yes. It can help with eBay shipping labels and eBay Standard Envelope label formatting.</p>
+          <h2>What does Split 4 Labels do?</h2>
+          <p>Split 4 Labels divides each page into four sections, detects non-blank sections, and converts each detected section into a separate 4x6 page.</p>
+
+          <h2>Does this work for screenshots?</h2>
+          <p>Yes. Upload a PNG, JPG, JPEG, or WEBP screenshot and use Smart Crop or Fit mode.</p>
 
           <h2>Does this work with multi-page PDFs?</h2>
-          <p>Yes. The converter processes each page and creates a new 4x6 page for every original PDF page.</p>
+          <p>Yes. The converter processes each page and creates a new 4x6 page for every original PDF page. Split modes may create more output pages than the original file.</p>
 
           <h2>What if Smart Crop zooms in too much?</h2>
-          <p>Try Fit mode. Fit mode keeps the entire page visible inside the 4x6 output.</p>
+          <p>Try Fit mode. Fit mode keeps the entire page or image visible inside the 4x6 output.</p>
 
           <h2>What if Fit mode leaves too much white space?</h2>
           <p>Try Smart Crop first, then Fill mode if you want the label to occupy more of the 4x6 page.</p>
@@ -1187,6 +1463,8 @@ app.get('/sitemap.xml', (req, res) => {
     '/ebay-standard-envelope',
     '/tiktok-shop-fix',
     '/amazon-fnsku-resize',
+    '/image-to-4x6',
+    '/split-label-sheet',
     '/best-thermal-printers',
     '/faq',
     '/privacy'
