@@ -1,4 +1,5 @@
 const express = require('express');
+const helmet = require('helmet');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -48,6 +49,7 @@ const upload = multer({
    MIDDLEWARE
 ========================================================= */
 
+app.use(helmet());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
