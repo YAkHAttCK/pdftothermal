@@ -112,11 +112,14 @@ gtag('config', '${GA_ID}');
 <style>
 
 :root{
-  --primary:#2563eb;
-  --dark:#0f172a;
-  --light:#f8fafc;
-  --border:#e2e8f0;
-  --muted:#64748b;
+  --primary:#4f7cff;
+  --primary-dark:#3157d5;
+  --ink:#f5f7ff;
+  --muted:#a8b3cf;
+  --surface:#151d35;
+  --surface-raised:#1b2643;
+  --border:rgba(174,190,234,.16);
+  --light:#0b1120;
 }
 
 *{
@@ -125,20 +128,25 @@ gtag('config', '${GA_ID}');
 
 body{
   margin:0;
-  font-family:Inter,system-ui,sans-serif;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   background:var(--light);
-  color:var(--dark);
+  color:var(--ink);
+  line-height:1.6;
+  background-image:radial-gradient(circle at 10% 0%, rgba(79,124,255,.16), transparent 34rem), radial-gradient(circle at 90% 10%, rgba(108,76,255,.12), transparent 30rem);
 }
 
 .container{
-  max-width:1000px;
+  width:min(1120px,calc(100% - 40px));
   margin:auto;
-  padding:0 20px;
 }
 
 header{
-  background:white;
+  background:rgba(11,17,32,.76);
   border-bottom:1px solid var(--border);
+  backdrop-filter:blur(16px);
+  position:sticky;
+  top:0;
+  z-index:10;
 }
 
 .header-inner{
@@ -149,10 +157,11 @@ header{
 }
 
 .logo{
-  font-size:24px;
+  font-size:20px;
   font-weight:800;
   text-decoration:none;
-  color:var(--primary);
+  color:var(--ink);
+  letter-spacing:-.03em;
 }
 
 nav a{
@@ -160,55 +169,70 @@ nav a{
   color:var(--muted);
   text-decoration:none;
   font-weight:600;
+  transition:color .2s ease;
+}
+
+nav a:hover,
+nav a:focus-visible{
+  color:var(--ink);
 }
 
 .hero{
-  padding:60px 0;
+  padding:88px 0 64px;
 }
 
 .card{
-  background:white;
+  background:linear-gradient(145deg,rgba(27,38,67,.96),rgba(18,27,50,.96));
   border-radius:24px;
   padding:35px;
-  box-shadow:0 4px 12px rgba(0,0,0,0.06);
+  box-shadow:0 24px 70px rgba(0,0,0,.28);
   border:1px solid var(--border);
 }
 
 .hero h1{
-  font-size:42px;
-  line-height:1.1;
+  max-width:760px;
+  font-size:clamp(38px,6vw,68px);
+  line-height:1.02;
+  letter-spacing:-.055em;
   margin-bottom:15px;
 }
 
 .hero p{
+  max-width:680px;
   font-size:18px;
   color:var(--muted);
   margin-bottom:30px;
 }
 
 .upload-box{
-  border:2px dashed var(--border);
+  border:2px dashed rgba(132,158,235,.42);
   border-radius:20px;
   padding:40px;
   text-align:center;
-  background:#f8fbff;
+  background:rgba(79,124,255,.07);
+  transition:border-color .2s ease,background-color .2s ease;
 }
 
 .upload-box:hover{
   border-color:var(--primary);
+  background:rgba(79,124,255,.12);
 }
 
 .upload-box input{
   margin-top:15px;
+  max-width:100%;
+  color:var(--muted);
 }
 
 .mode-row{
   margin-top:25px;
+  color:var(--muted);
 }
 
 .mode-row label{
   margin-right:18px;
   font-weight:600;
+  cursor:pointer;
 }
 
 .btn{
@@ -221,11 +245,21 @@ nav a{
   cursor:pointer;
   text-decoration:none;
   display:inline-block;
+  box-shadow:0 10px 24px rgba(79,124,255,.24);
+  transition:transform .2s ease,background-color .2s ease,box-shadow .2s ease;
+}
+
+.btn:hover,
+.btn:focus-visible{
+  background:var(--primary-dark);
+  transform:translateY(-2px);
+  box-shadow:0 14px 28px rgba(79,124,255,.34);
 }
 
 .btn-secondary{
-  background:#eff6ff;
+  background:rgba(255,255,255,.08);
   color:var(--primary);
+  box-shadow:none;
 }
 
 .preview-frame{
@@ -234,17 +268,18 @@ nav a{
   border:1px solid var(--border);
   border-radius:16px;
   margin:20px 0;
+  background:#fff;
 }
 
 .feature-grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
   gap:20px;
-  margin-top:40px;
+  margin-top:28px;
 }
 
 .feature{
-  background:white;
+  background:rgba(21,29,53,.78);
   padding:24px;
   border-radius:18px;
   border:1px solid var(--border);
@@ -262,21 +297,29 @@ nav a{
 }
 
 .seo-grid a{
-  background:white;
+  background:rgba(21,29,53,.78);
   border:1px solid var(--border);
   padding:16px;
   border-radius:14px;
   text-decoration:none;
   color:var(--primary);
   font-weight:700;
+  transition:transform .2s ease,border-color .2s ease;
+}
+
+.seo-grid a:hover,
+.seo-grid a:focus-visible{
+  transform:translateY(-2px);
+  border-color:rgba(79,124,255,.72);
 }
 
 footer{
-  background:var(--dark);
+  background:#070b16;
   color:white;
   margin-top:70px;
   padding:35px 0;
   text-align:center;
+  border-top:1px solid var(--border);
 }
 
 footer a{
@@ -298,6 +341,19 @@ footer a{
   gap:15px;
 }
 
+}
+
+:focus-visible{
+  outline:3px solid #9bb2ff;
+  outline-offset:3px;
+}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    scroll-behavior:auto!important;
+    transition-duration:.01ms!important;
+    animation-duration:.01ms!important;
+  }
 }
 
 </style>
@@ -459,14 +515,18 @@ app.get('/', (req, res) => {
 
 <section class="hero">
 
+<p style="color:var(--primary);font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:13px;margin-bottom:18px;">
+  The no-fuss 4x6 label converter
+</p>
+
 <div class="card">
 
 <h1>
-Fix Shipping Labels for Thermal Printers in Seconds
+Make every shipping label print perfectly
 </h1>
 
 <p>
-Convert USPS, UPS, FedEx, Etsy, Amazon, Mercari, and eBay labels into perfect 4x6 thermal PDFs instantly.
+Turn oversized, sideways, or awkward labels into a crisp 4x6 PDF for your thermal printer in seconds. No account, no wrestling with print settings.
 </p>
 
 <form
@@ -477,13 +537,15 @@ Convert USPS, UPS, FedEx, Etsy, Amazon, Mercari, and eBay labels into perfect 4x
 
 <div class="upload-box">
 
-<h2>Upload Label</h2>
+<h2>Drop in your label</h2>
 
 <p>
-Supports PDF, PNG, JPG, JPEG, and WEBP
+PDF, PNG, JPG, JPEG, and WEBP · up to 15 MB
 </p>
 
+<label for="labelFile" style="display:block;font-weight:700;">Choose a file to convert</label>
 <input
+  id="labelFile"
   type="file"
   name="labelFile"
   accept=".pdf,.png,.jpg,.jpeg,.webp"
@@ -494,19 +556,21 @@ Supports PDF, PNG, JPG, JPEG, and WEBP
 
 <div class="mode-row">
 
+<span style="display:block;margin-bottom:10px;font-size:14px;">Layout</span>
+
 <label>
 <input type="radio" name="mode" value="fit" checked />
-Fit
+Fit inside
 </label>
 
 <label>
 <input type="radio" name="mode" value="fill" />
-Fill
+Fill page
 </label>
 
 <label>
 <input type="radio" name="mode" value="autorotate" />
-Auto Rotate
+Auto-rotate
 </label>
 
 </div>
@@ -514,7 +578,7 @@ Auto Rotate
 <br>
 
 <button class="btn" type="submit">
-Convert Now
+Convert to 4x6
 </button>
 
 </form>
@@ -524,23 +588,23 @@ Convert Now
 <div class="feature-grid">
 
 <div class="feature">
-<h3>PDF Support</h3>
+<h3>Works with your workflow</h3>
 <p>
-Convert standard 8.5x11 shipping labels into thermal size automatically.
+USPS, UPS, FedEx, Etsy, Amazon, Mercari, eBay, and more.
 </p>
 </div>
 
 <div class="feature">
-<h3>Image Support</h3>
+<h3>Print-ready output</h3>
 <p>
-Upload screenshots and JPG labels directly from your phone.
+Every conversion is sized for a standard 4x6 thermal label.
 </p>
 </div>
 
 <div class="feature">
-<h3>Auto Rotate</h3>
+<h3>Private by default</h3>
 <p>
-Fix sideways labels automatically for Rollo, Zebra, Jadens, and Munbyn printers.
+Files are processed temporarily and cleaned up automatically.
 </p>
 </div>
 
